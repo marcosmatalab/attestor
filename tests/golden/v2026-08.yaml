@@ -1,0 +1,166 @@
+# Golden vectors for bundle v2026-08 (legal text). These pin the deterministic
+# classifier: each vector asserts the risk tier AND the per-obligation effective
+# date. Any drift fails the build. Dates are quoted strings (legal text only).
+vectors:
+  # 1. High-risk provider — full Annex III provider obligation set @ 2026-08-02.
+  - name: hiring_provider_high_risk
+    input: { role: provider, annex_iii_area: employment }
+    expected:
+      risk: high
+      obligations:
+        - { id: art9_risk_management, effective_date: "2026-08-02" }
+        - { id: art10_data_governance, effective_date: "2026-08-02" }
+        - { id: art11_technical_documentation, effective_date: "2026-08-02" }
+        - { id: art12_record_keeping, effective_date: "2026-08-02" }
+        - { id: art13_transparency_deployers, effective_date: "2026-08-02" }
+        - { id: art14_human_oversight, effective_date: "2026-08-02" }
+        - { id: art15_accuracy_robustness, effective_date: "2026-08-02" }
+        - { id: art16_provider_obligations, effective_date: "2026-08-02" }
+        - { id: art17_quality_management, effective_date: "2026-08-02" }
+        - { id: art43_conformity_assessment, effective_date: "2026-08-02" }
+        - { id: art47_eu_declaration, effective_date: "2026-08-02" }
+        - { id: art48_ce_marking, effective_date: "2026-08-02" }
+        - { id: art49_registration, effective_date: "2026-08-02" }
+
+  # 2. High-risk deployer that is a public body → FRIA fires (branch A).
+  - name: hiring_deployer_public_fria
+    input: { role: deployer, annex_iii_area: employment, deployer_type: public_body }
+    expected:
+      risk: high
+      obligations:
+        - { id: art12_record_keeping, effective_date: "2026-08-02" }
+        - { id: art27_fria, effective_date: "2026-08-02" }
+
+  # 3. High-risk deployer, private/other → no FRIA (negative of branch A).
+  - name: hiring_deployer_other_no_fria
+    input: { role: deployer, annex_iii_area: employment, deployer_type: other }
+    expected:
+      risk: high
+      obligations:
+        - { id: art12_record_keeping, effective_date: "2026-08-02" }
+
+  # 4. Credit scoring (Annex III 5(b)) deployed by a private/other entity → FRIA
+  #    fires anyway (branch B names points 5(b)/(c) regardless of deployer type).
+  - name: credit_scoring_deployer_private_fria
+    input: { role: deployer, annex_iii_area: credit_scoring, deployer_type: other }
+    expected:
+      risk: high
+      obligations:
+        - { id: art12_record_keeping, effective_date: "2026-08-02" }
+        - { id: art27_fria, effective_date: "2026-08-02" }
+
+  # 5. Critical infrastructure (Annex III point 2) public body → NO FRIA (point 2
+  #    is explicitly excluded from Art. 27).
+  - name: critical_infra_deployer_public_no_fria
+    input: { role: deployer, annex_iii_area: critical_infrastructure, deployer_type: public_body }
+    expected:
+      risk: high
+      obligations:
+        - { id: art12_record_keeping, effective_date: "2026-08-02" }
+
+  # 6. Chatbot → limited, Art. 50(1) (provider).
+  - name: chatbot_provider_limited
+    input: { role: provider, interacts_with_humans: true }
+    expected:
+      risk: limited
+      obligations:
+        - { id: art50_1_chatbot, effective_date: "2026-08-02" }
+
+  # 7. Image generator, new content → limited, Art. 50(2) @ 2026-08-02.
+  - name: imagegen_new_provider
+    input: { role: provider, generates_synthetic_content: true, content_lifecycle: new }
+    expected:
+      risk: limited
+      obligations:
+        - { id: art50_2_marking, effective_date: "2026-08-02" }
+
+  # 8. Image generator, LEGACY content → still 2026-08-02 under pure legal text.
+  #    (The 2026-12-02 legacy transition is a Digital Omnibus delta, added in F2.)
+  - name: imagegen_legacy_provider
+    input: { role: provider, generates_synthetic_content: true, content_lifecycle: legacy }
+    expected:
+      risk: limited
+      obligations:
+        - { id: art50_2_marking, effective_date: "2026-08-02" }
+
+  # 9. Deepfake generator → limited, Art. 50(4) (deployer).
+  - name: deepfake_deployer_limited
+    input: { role: deployer, generates_deepfakes: true }
+    expected:
+      risk: limited
+      obligations:
+        - { id: art50_4_deepfake, effective_date: "2026-08-02" }
+
+  # 10. Emotion recognition disclosure → limited, Art. 50(3) (deployer).
+  - name: emotion_disclosure_deployer_limited
+    input: { role: deployer, informs_emotion_biometric: true }
+    expected:
+      risk: limited
+      obligations:
+        - { id: art50_3_emotion_biometric, effective_date: "2026-08-02" }
+
+  # 11. Prohibited practice → only the prohibition, @ 2025-02-02.
+  - name: prohibited_social_scoring
+    input: { role: provider, prohibited_practice: social_scoring }
+    expected:
+      risk: prohibited
+      obligations:
+        - { id: art5_prohibition, effective_date: "2025-02-02" }
+
+  # 12. No triggers → minimal, no obligations.
+  - name: minimal_no_obligations
+    input: { role: provider }
+    expected:
+      risk: minimal
+      obligations: []
+
+  # 13. GPAI AND high-risk → tier is high (Annex III) and the transversal GPAI
+  #     track coexists (Art. 53 @ 2025-08-02).
+  - name: gpai_and_high_risk
+    input: { role: provider, annex_iii_area: biometrics, is_gpai: true }
+    expected:
+      risk: high
+      obligations:
+        - { id: art9_risk_management, effective_date: "2026-08-02" }
+        - { id: art10_data_governance, effective_date: "2026-08-02" }
+        - { id: art11_technical_documentation, effective_date: "2026-08-02" }
+        - { id: art12_record_keeping, effective_date: "2026-08-02" }
+        - { id: art13_transparency_deployers, effective_date: "2026-08-02" }
+        - { id: art14_human_oversight, effective_date: "2026-08-02" }
+        - { id: art15_accuracy_robustness, effective_date: "2026-08-02" }
+        - { id: art16_provider_obligations, effective_date: "2026-08-02" }
+        - { id: art17_quality_management, effective_date: "2026-08-02" }
+        - { id: art43_conformity_assessment, effective_date: "2026-08-02" }
+        - { id: art47_eu_declaration, effective_date: "2026-08-02" }
+        - { id: art48_ce_marking, effective_date: "2026-08-02" }
+        - { id: art49_registration, effective_date: "2026-08-02" }
+        - { id: gpai_art53_documentation, effective_date: "2025-08-02" }
+
+  # 14. GPAI-only model with systemic risk → minimal tier, GPAI track only.
+  - name: gpai_only_systemic_minimal
+    input: { role: provider, is_gpai: true, is_gpai_systemic: true }
+    expected:
+      risk: minimal
+      obligations:
+        - { id: gpai_art53_documentation, effective_date: "2025-08-02" }
+        - { id: gpai_art55_systemic_risk, effective_date: "2025-08-02" }
+
+  # 15. Annex I (product-embedded) high-risk → same provider duties, later date
+  #     (2027-08-02), and no Art. 49 EU-database registration.
+  - name: annex_i_embedded_provider
+    input: { role: provider, annex_i_embedded: true }
+    expected:
+      risk: high
+      obligations:
+        - { id: art9_risk_management, effective_date: "2027-08-02" }
+        - { id: art10_data_governance, effective_date: "2027-08-02" }
+        - { id: art11_technical_documentation, effective_date: "2027-08-02" }
+        - { id: art12_record_keeping, effective_date: "2027-08-02" }
+        - { id: art13_transparency_deployers, effective_date: "2027-08-02" }
+        - { id: art14_human_oversight, effective_date: "2027-08-02" }
+        - { id: art15_accuracy_robustness, effective_date: "2027-08-02" }
+        - { id: art16_provider_obligations, effective_date: "2027-08-02" }
+        - { id: art17_quality_management, effective_date: "2027-08-02" }
+        - { id: art43_conformity_assessment, effective_date: "2027-08-02" }
+        - { id: art47_eu_declaration, effective_date: "2027-08-02" }
+        - { id: art48_ce_marking, effective_date: "2027-08-02" }
