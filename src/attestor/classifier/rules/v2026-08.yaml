@@ -32,6 +32,7 @@ articles:
   "Art. 15": "Accuracy, robustness and cybersecurity"
   "Art. 16": "Obligations of providers of high-risk AI systems"
   "Art. 17": "Quality management system"
+  "Art. 26(6)": "Deployer obligation to retain automatically generated logs"
   "Art. 27": "Fundamental rights impact assessment (FRIA)"
   "Art. 43": "Conformity assessment"
   "Art. 47": "EU declaration of conformity"
@@ -103,7 +104,9 @@ obligation_rules:
   - { obligation: art48_ce_marking,            when: { risk_tier: high, annex_i_embedded: true, role: provider }, effective_date: "2027-08-02" }
 
   # ----- High-risk · deployer obligations (2026-08-02) -----
-  - { obligation: art12_record_keeping, when: { risk_tier: high, role: deployer }, effective_date: "2026-08-02" }
+  # Deployer log RETENTION is Art. 26(6), distinct from the provider's Art. 12
+  # record-keeping (logging capability), which stays on the provider rules above.
+  - { obligation: art26_6_log_retention, when: { risk_tier: high, role: deployer }, effective_date: "2026-08-02" }
   # FRIA branch A: public bodies / private providers of public services, for any
   # Annex III area EXCEPT point 2 (critical infrastructure).
   - { obligation: art27_fria, when: { risk_tier: high, role: deployer, deployer_type: [public_body, private_public_service], fria_eligible_area: true }, effective_date: "2026-08-02" }
@@ -132,6 +135,7 @@ obligations:
   art15_accuracy_robustness:   { reference: "Art. 15",   title: "Accuracy, robustness and cybersecurity" }
   art16_provider_obligations:  { reference: "Art. 16",   title: "Obligations of providers of high-risk AI systems" }
   art17_quality_management:    { reference: "Art. 17",   title: "Quality management system" }
+  art26_6_log_retention:       { reference: "Art. 26(6)", title: "Deployer retention of automatically generated logs" }
   art27_fria:                  { reference: "Art. 27",   title: "Fundamental rights impact assessment" }
   art43_conformity_assessment: { reference: "Art. 43",   title: "Conformity assessment" }
   art47_eu_declaration:        { reference: "Art. 47",   title: "EU declaration of conformity" }
