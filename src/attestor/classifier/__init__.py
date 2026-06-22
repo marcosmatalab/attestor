@@ -5,6 +5,7 @@ The classification *decision* is a rule engine over a versioned regulatory bundl
 content-addressed checksum an auditor can reproduce.
 """
 
+from attestor.classifier.bundle import Bundle, load_bundle
 from attestor.classifier.model import (
     AnnexIIIArea,
     AppliedObligation,
@@ -20,6 +21,7 @@ from attestor.classifier.model import (
 __all__ = [
     "AnnexIIIArea",
     "AppliedObligation",
+    "Bundle",
     "Classification",
     "ContentLifecycle",
     "DeployerType",
@@ -27,4 +29,5 @@ __all__ = [
     "RiskTier",
     "Role",
     "SystemProfile",
+    "load_bundle",
 ]
