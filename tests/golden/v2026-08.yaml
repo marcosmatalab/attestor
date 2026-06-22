@@ -28,7 +28,7 @@ vectors:
     expected:
       risk: high
       obligations:
-        - { id: art12_record_keeping, effective_date: "2026-08-02" }
+        - { id: art26_6_log_retention, effective_date: "2026-08-02" }
         - { id: art27_fria, effective_date: "2026-08-02" }
 
   # 3. High-risk deployer, private/other → no FRIA (negative of branch A).
@@ -37,7 +37,7 @@ vectors:
     expected:
       risk: high
       obligations:
-        - { id: art12_record_keeping, effective_date: "2026-08-02" }
+        - { id: art26_6_log_retention, effective_date: "2026-08-02" }
 
   # 4. Credit scoring (Annex III 5(b)) deployed by a private/other entity → FRIA
   #    fires anyway (branch B names points 5(b)/(c) regardless of deployer type).
@@ -46,7 +46,7 @@ vectors:
     expected:
       risk: high
       obligations:
-        - { id: art12_record_keeping, effective_date: "2026-08-02" }
+        - { id: art26_6_log_retention, effective_date: "2026-08-02" }
         - { id: art27_fria, effective_date: "2026-08-02" }
 
   # 5. Critical infrastructure (Annex III point 2) public body → NO FRIA (point 2
@@ -56,7 +56,7 @@ vectors:
     expected:
       risk: high
       obligations:
-        - { id: art12_record_keeping, effective_date: "2026-08-02" }
+        - { id: art26_6_log_retention, effective_date: "2026-08-02" }
 
   # 6. Chatbot → limited, Art. 50(1) (provider).
   - name: chatbot_provider_limited
