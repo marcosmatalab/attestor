@@ -6,6 +6,7 @@ content-addressed checksum an auditor can reproduce.
 """
 
 from attestor.classifier.bundle import Bundle, load_bundle
+from attestor.classifier.engine import classify
 from attestor.classifier.model import (
     AnnexIIIArea,
     AppliedObligation,
@@ -29,5 +30,6 @@ __all__ = [
     "RiskTier",
     "Role",
     "SystemProfile",
+    "classify",
     "load_bundle",
 ]
