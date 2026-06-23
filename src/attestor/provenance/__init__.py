@@ -7,9 +7,13 @@ provenance/integrity signal, not proof of truth — see the README honesty note.
 
 from attestor.provenance.devcert import generate_dev_cert
 from attestor.provenance.manifest import ProvenanceMetadata, build_manifest
+from attestor.provenance.signer import SignerConfig, build_signer, sign_asset
 
 __all__ = [
     "ProvenanceMetadata",
+    "SignerConfig",
     "build_manifest",
+    "build_signer",
     "generate_dev_cert",
+    "sign_asset",
 ]
