@@ -34,6 +34,12 @@ def test_profile_is_frozen() -> None:
         profile.role = Role.deployer
 
 
+def test_omnibus_ncii_csam_fields_default_to_false() -> None:
+    profile = SystemProfile(role=Role.provider)
+    assert profile.generates_ncii_or_csam is False
+    assert profile.ncii_csam_safeguards is False
+
+
 def test_synthetic_content_requires_lifecycle() -> None:
     with pytest.raises(ValidationError):
         SystemProfile(role=Role.provider, generates_synthetic_content=True)
