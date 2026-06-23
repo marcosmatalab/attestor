@@ -1,6 +1,9 @@
 # Attestor
 
-> **Status: `pre-alpha` · 🚧 under construction.** F0 (scaffold) only. No business logic yet.
+> **Status: portfolio demonstration.** The full engine (F1–F7) is implemented and tested —
+> deterministic classifier, Annex IV generator, C2PA sign/verify, offline-verifiable ledger,
+> and governance artifacts — with a thin Next.js dashboard (F8) over a FastAPI layer. Not
+> legal advice, not a compliance product.
 
 **Attestor is a deterministic EU AI Act compliance engine.** You register an AI
 system and Attestor (1) **classifies its risk** under the EU AI Act (prohibited /
@@ -70,6 +73,9 @@ curl http://127.0.0.1:8000/health
 ruff check .
 ruff format --check .
 pytest
+
+# 5. Run the dashboard (separate terminal, with the API running)
+cd web && npm install && npm run dev    # http://localhost:3000
 ```
 
 Configuration is read from environment variables / a local `.env` (see
@@ -89,7 +95,7 @@ Configuration is read from environment variables / a local `.env` (see
 | **F5** | C2PA verifier — reports signer + assertions + the provenance **nuance** | ✅ |
 | **F6** | Ledger Ed25519 + Merkle + RFC3161, **offline** verification via CLI | ✅ |
 | **F7** | Governance: ISO/IEC 42001 mapping + FRIA (Art. 27) + Art. 12 logs | ✅ |
-| **F8** | Dashboard (Next.js) + polish + demo | ⏳ |
+| **F8** | Dashboard (Next.js) + polish + demo | ✅ |
 
 > **Bundle schema note (F1 design constraint):** effective dates are stored
 > **per obligation**, not as a single global date — so F2 can add the Omnibus
@@ -401,6 +407,44 @@ signed = log.seal(ledger_key)                   # tamper-evident, offline-verifi
 
 ---
 
+## Dashboard and HTTP API (F8)
+
+A **thin presentation layer** over the engine: a FastAPI surface and a Next.js 16 dashboard.
+There is **zero compliance logic** in either — every figure, date, checksum, and verdict comes
+from F1–F7, which remain the single source of truth.
+
+- **`/api` endpoints** are thin wrappers: `POST /api/classify`, `/api/timeline` (dual dates),
+  `/api/annex-iv` (+ `/pdf`), `/api/governance/crosswalk`, `/api/governance/fria`,
+  `/api/provenance/verify`, `/api/ledger/verify`, and `/api/demo/run`. Gated engine errors
+  surface as HTTP 422 with the engine's own message; computed properties (`headline`,
+  `effective_dates`) are serialized verbatim — never reimplemented in the API.
+- **The decisive test:** each endpoint's response is compared to a direct engine call (identical
+  checksum, identical report) — the proof that nothing is mocked or hardcoded.
+- **The dashboard** (`web/`) renders those outputs verbatim: the risk badge and reproducible
+  checksum, the dual legal-text vs Omnibus timeline with the provisional caveat, the Annex IV
+  scaffold, the ISO/IEC 42001 crosswalk, the FRIA scaffold, and the C2PA + ledger verification.
+
+### End-to-end demo
+
+`POST /api/demo/run` (the **End-to-end demo** page) runs one example **high-risk provider** path
+live: classify → Annex IV → sign an AI output (C2PA) → verify → anchor in the ledger → verify the
+ledger offline. Signing and sealing use **ephemeral dev keys** generated per request (never
+committed), so the C2PA signer is honestly **untrusted** and the ledger still verifies offline.
+
+### UI honesty (no overselling)
+
+- A persistent banner: a portfolio demonstration, not legal advice or a compliance product. The
+  words "compliant" / "certified" / "verified" never stand alone.
+- **Dual dates always**, with the Omnibus "pending adoption" caveat — never a single date as "the"
+  date.
+- **"Validated"** is shown to mean a citation *resolves and traces* to an emitted obligation, not
+  that it substantiates a claim.
+- **C2PA** uses the F5 headline verbatim: "integrity Valid" never appears without the trust
+  qualifier, and the dev signer is reported **UNTRUSTED**.
+- **The ledger** is described as an append-only log verifiable offline — **not a blockchain**.
+
+---
+
 ## Stack
 
 | Layer | Technology |
@@ -412,8 +456,8 @@ signed = log.seal(ledger_key)                   # tamper-evident, offline-verifi
 | Timestamp | RFC3161 TSA (AdES "T" level) |
 | Ledger | Ed25519 (`cryptography`) + custom Merkle tree + RFC3161 |
 | Governance | ISO/IEC 42001 reference crosswalk + FRIA (Art. 27) scaffold + Art. 12 logs |
-| Backend | FastAPI + PostgreSQL (multi-tenant RLS) |
-| Frontend | Next.js (registration, compliance dashboard, verifier) |
+| HTTP API | FastAPI — thin `/api` wrappers over the engine (no compliance logic) |
+| Frontend | Next.js 16 (App Router, React 19) — questionnaire, results, end-to-end demo |
 | PDF | Annex IV dossier + evidence export |
 
 ---
