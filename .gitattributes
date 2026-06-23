@@ -1,0 +1,5 @@
+# Ledger test fixtures are cryptographic artifacts: byte-exact across platforms.
+# Disable EOL conversion so the recorded RFC3161 token and TSA certs verify offline
+# identically on Windows and the Linux CI runner.
+tests/fixtures/ledger/timestamp.tsr -text
+tests/fixtures/ledger/tsa/*.pem -text
