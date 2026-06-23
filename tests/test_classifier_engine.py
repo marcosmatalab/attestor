@@ -92,7 +92,7 @@ def test_fria_fires_for_credit_scoring_even_for_private_deployer(bundle: Bundle)
 
 def test_prohibited_short_circuit_drops_other_obligations(bundle: Bundle) -> None:
     # Even with a transparency trigger present, a prohibited system carries only
-    # the prohibition (and not art50_1, which shares the "art5" prefix).
+    # its prohibition obligation; art50_1 (not a prohibition) is dropped.
     result = classify(
         SystemProfile(
             role=Role.provider,
@@ -129,3 +129,63 @@ def test_checksum_reflects_the_result(bundle: Bundle) -> None:
         bundle,
     )
     assert minimal.checksum != prohibited.checksum
+
+
+def _category_bundle() -> Bundle:
+    """A bundle exercising the category-tagged + legacy-id prohibition mechanism."""
+    return Bundle(
+        {
+            "meta": {"version": "cat-test"},
+            "articles": {"Art. 5(1)": "Prohibited", "Art. 50(1)": "Transparency"},
+            "risk_tier_rules": [
+                {"id": "prohibited", "when": {"nudifier_prohibited": True}, "tier": "prohibited"},
+                {"id": "minimal", "when": {}, "tier": "minimal"},
+            ],
+            "obligation_rules": [
+                {
+                    "obligation": "art5_prohibition",
+                    "when": {"risk_tier": "prohibited"},
+                    "effective_date": "2025-02-02",
+                },
+                {
+                    "obligation": "art5_nudifier",
+                    "when": {"nudifier_prohibited": True},
+                    "effective_date": "2026-12-02",
+                },
+                {
+                    "obligation": "art50_1",
+                    "when": {"nudifier_prohibited": True},
+                    "effective_date": "2026-08-02",
+                },
+            ],
+            "obligations": {
+                # no category -> recognised via the legacy id allowlist
+                "art5_prohibition": {"reference": "Art. 5(1)", "title": "Prohibited"},
+                # category tag -> recognised as a prohibition
+                "art5_nudifier": {
+                    "reference": "Art. 5(1)",
+                    "title": "Nudifier",
+                    "category": "prohibition",
+                },
+                # not a prohibition -> dropped by the short-circuit even though it fired
+                "art50_1": {"reference": "Art. 50(1)", "title": "Transparency"},
+            },
+        }
+    )
+
+
+def test_short_circuit_keeps_category_and_legacy_prohibitions_only() -> None:
+    result = classify(
+        SystemProfile(role=Role.provider, generates_ncii_or_csam=True), _category_bundle()
+    )
+    assert result.risk is RiskTier.prohibited
+    assert {o.id for o in result.obligations} == {"art5_prohibition", "art5_nudifier"}
+
+
+def test_safe_harbour_disables_the_nudifier_prohibition() -> None:
+    result = classify(
+        SystemProfile(role=Role.provider, generates_ncii_or_csam=True, ncii_csam_safeguards=True),
+        _category_bundle(),
+    )
+    assert result.risk is RiskTier.minimal
+    assert result.obligations == ()
