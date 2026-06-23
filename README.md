@@ -86,13 +86,8 @@ Configuration is read from environment variables / a local `.env` (see
 | **F2** | **Additive:** Omnibus-scenario bundle + timeline resolution presenting **both** dates (legal text vs Omnibus provisional) + the "pending formal adoption" caveat. *No rewrite of F1 goldens.* | ✅ |
 | **F3** | Annex IV generator + **validated citations** (a citation that doesn't resolve is rejected) + PDF export | ✅ |
 | **F4** | C2PA signer — manifest (X.509) + RFC3161 timestamp, keys via KMS/HSM | ✅ |
-<<<<<<< HEAD
-| **F5** | C2PA verifier — reports signer + assertions + the provenance **nuance** | ⏳ |
-| **F6** | Ledger Ed25519 + Merkle + RFC3161, **offline** verification via CLI | ✅ |
-=======
 | **F5** | C2PA verifier — reports signer + assertions + the provenance **nuance** | ✅ |
-| **F6** | Ledger Ed25519 + Merkle + RFC3161, **offline** verification via CLI | ⏳ |
->>>>>>> origin/main
+| **F6** | Ledger Ed25519 + Merkle + RFC3161, **offline** verification via CLI | ✅ |
 | **F7** | Governance: ISO/IEC 42001 mapping + FRIA (Art. 27) + Art. 12 logs | ⏳ |
 | **F8** | Dashboard (Next.js) + polish + demo | ⏳ |
 
