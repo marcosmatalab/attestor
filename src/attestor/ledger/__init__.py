@@ -33,6 +33,7 @@ from attestor.ledger.timestamp import (
     request_timestamp,
     verify_timestamp,
 )
+from attestor.ledger.verifier import verify_inclusion_proof, verify_ledger
 
 __all__ = [
     "InclusionProof",
@@ -52,5 +53,7 @@ __all__ = [
     "root_commitment",
     "save_ledger",
     "seal",
+    "verify_inclusion_proof",
+    "verify_ledger",
     "verify_timestamp",
 ]
