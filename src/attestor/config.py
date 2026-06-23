@@ -17,5 +17,13 @@ class Settings(BaseSettings):
     app_env: str = "development"
     log_level: str = "INFO"
 
+    # C2PA provenance signing (F4). Paths to a PEM certificate chain (leaf + CA)
+    # and the leaf private key. NEVER hardcoded or committed; in dev a self-signed
+    # chain is generated, in production the key lives in a KMS/HSM. The TSA URL
+    # (RFC3161) is optional and shared with the ledger (F6).
+    c2pa_cert_path: str | None = None
+    c2pa_private_key_path: str | None = None
+    rfc3161_tsa_url: str | None = None
+
 
 settings = Settings()
