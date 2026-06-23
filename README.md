@@ -62,10 +62,9 @@ flowchart TD
 
 ![Attestor dashboard](docs/dashboard.png)
 
-> **Screenshot placeholder.** Capture this from the running dashboard (`web/`, see
-> [Run it locally](#run-it-locally)) and commit it to [`docs/dashboard.png`](docs/). Every value
-> shown — risk, checksum, dual dates, and the C2PA / ledger verdicts — is rendered verbatim from
-> the engine.
+> The end-to-end demo page, captured live from the running app — every value (risk, checksum,
+> the C2PA verdict with the signer reported **untrusted**, and the ledger **verified** offline) is
+> rendered verbatim from the engine. Reproduce it via [Run it locally](#run-it-locally).
 
 ---
 
