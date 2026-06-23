@@ -28,7 +28,12 @@ _PROHIBITION_OBLIGATION_ID = "art5_prohibition"
 
 def classify(profile: SystemProfile, bundle: Bundle) -> Classification:
     """Classify ``profile`` against ``bundle`` deterministically."""
-    answers = profile.model_dump(mode="json")
+    # exclude_defaults (NOT exclude_unset) keeps the canonical fingerprint stable as
+    # the input schema grows: a field left at its default is absent from the canonical
+    # form, so adding new optional fields never perturbs the checksum of older inputs.
+    # exclude_unset would break determinism — two semantically equal profiles (one
+    # built with explicit defaults, one relying on them) would serialize differently.
+    answers = profile.model_dump(mode="json", exclude_defaults=True)
     context = _build_context(profile, answers)
 
     risk = _resolve_tier(context, bundle)
