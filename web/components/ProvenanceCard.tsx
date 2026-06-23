@@ -15,9 +15,10 @@ export function ProvenanceCard({ prov }: { prov: Provenance }) {
       <Callout tone="caveat">
         Integrity (<strong>{prov.validation_state}</strong>) means the manifest is intact — it
         does{" "}
-        <strong>not</strong> mean the signer is trusted. The demo&apos;s dev certificate is on no
-        C2PA trust list, so the signer is reported <strong>untrusted</strong>. &quot;Valid&quot; is
-        never shown without the trust qualifier.
+        <strong>not</strong>{" "}
+        mean the signer is trusted. The demo&apos;s dev certificate is on no C2PA trust list, so
+        the signer is reported <strong>untrusted</strong>. &quot;Valid&quot; is never shown without
+        the trust qualifier.
       </Callout>
       {prov.signer && (
         <KeyValue>
