@@ -14,11 +14,35 @@ from attestor.ledger.keys import (
     load_public_key_hex,
     public_key_hex,
 )
+from attestor.ledger.ledger import (
+    Ledger,
+    load_ledger,
+    prove_inclusion,
+    root_commitment,
+    save_ledger,
+    seal,
+)
+from attestor.ledger.model import (
+    InclusionProof,
+    LedgerVerification,
+    SignedRoot,
+    TimestampInfo,
+)
 
 __all__ = [
+    "InclusionProof",
+    "Ledger",
     "LedgerKeyConfig",
+    "LedgerVerification",
+    "SignedRoot",
+    "TimestampInfo",
     "generate_ledger_key",
+    "load_ledger",
     "load_private_key",
     "load_public_key_hex",
+    "prove_inclusion",
     "public_key_hex",
+    "root_commitment",
+    "save_ledger",
+    "seal",
 ]
