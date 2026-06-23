@@ -22,60 +22,91 @@ the same output, with a checksum, reproducible for an auditor.
 
 ## Architecture
 
-```
-  Register AI system ──▶ ┌──────────────────────────────────────────────┐
-   (questionnaire)       │                  ATTESTOR                     │
-                         │                                              │
-                         │   ┌──────────────────────────────────────┐   │
-                         │   │  DETERMINISTIC CLASSIFIER (rules)     │   │
-                         │   │   risk + obligations + EFFECTIVE      │   │
-                         │   │   DATES  (versioned bundle, Omnibus-  │   │
-                         │   │   aware)   → checksum + golden        │   │
-                         │   └──────────────────┬───────────────────┘   │
-                         │                      ▼                        │
-                         │   ┌──────────────────────────────────────┐   │
-                         │   │  ANNEX IV GENERATOR                   │   │
-                         │   │   citations validated → articles      │   │
-                         │   └──────────────────┬───────────────────┘   │
-                         │                      ▼                        │
-   AI output ───────────▶│   ┌──────────────────────────────────────┐   │
-                         │   │  C2PA SIGNER / VERIFIER               │   │
-                         │   │   manifest (X.509) + RFC3161          │   │
-                         │   └──────────────────┬───────────────────┘   │
-                         │                      ▼                        │
-                         │   ┌──────────────────────────────────────┐   │
-                         │   │  LEDGER  Ed25519 + Merkle + RFC3161   │   │
-                         │   │   anchors dossier + C2PA manifests    │   │
-                         │   └──────────────────┬───────────────────┘   │
-                         └──────────────────────┼───────────────────────┘
-                                                ▼
-                          OFFLINE verification by a third party (auditor)
+Each node is a module that exists in the repo. The classification decision is a rule
+engine (no LLM); the HTTP/UI layer is a thin wrapper that only displays engine output.
+
+```mermaid
+flowchart TD
+    profile["SystemProfile (questionnaire)"]
+    output["AI output (image / file)"]
+
+    subgraph engine["Deterministic engine — no LLM in the decision"]
+        direction TB
+        classifier["classifier/ — risk + obligations +<br/>DUAL dates (legal text vs Omnibus) + checksum"]
+        annexiv["annexiv/ — Annex IV dossier, validated citations<br/>(gated: high-risk provider)"]
+        governance["governance/ — ISO/IEC 42001 crosswalk ·<br/>FRIA (Art. 27) · Art. 12 log"]
+        provenance["provenance/ — C2PA sign / verify<br/>(integrity vs signer trust)"]
+        ledger["ledger/ — RFC 6962 Merkle + Ed25519 + RFC 3161"]
+    end
+
+    api["api/ — FastAPI thin wrappers"]
+    web["web/ — Next.js dashboard"]
+    auditor["Third party / auditor —<br/>OFFLINE verify (python -m attestor.ledger)"]
+
+    profile --> classifier
+    output --> provenance
+    classifier --> annexiv
+    classifier --> governance
+    classifier -- checksum --> ledger
+    annexiv -- dossier hash --> ledger
+    provenance -- manifest hash --> ledger
+    governance -. "anchors Art. 12 log" .-> ledger
+    engine --> api
+    api --> web
+    ledger ==> auditor
 ```
 
 ---
 
-## Quickstart
+## Dashboard
+
+![Attestor dashboard](docs/dashboard.png)
+
+> **Screenshot placeholder.** Capture this from the running dashboard (`web/`, see
+> [Run it locally](#run-it-locally)) and commit it to [`docs/dashboard.png`](docs/). Every value
+> shown — risk, checksum, dual dates, and the C2PA / ledger verdicts — is rendered verbatim from
+> the engine.
+
+---
+
+## Run it locally
+
+The backend is the engine plus a thin FastAPI layer; the frontend is a Next.js dashboard that
+calls it. Run them in two terminals.
+
+**1 · Backend** (Python ≥ 3.12)
 
 ```bash
-# 1. Install (editable, with dev tooling)
 python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
+source .venv/bin/activate                 # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 
-# 2. Run the API
-uvicorn attestor.api.main:app --reload
+uvicorn attestor.api.main:app --reload    # http://127.0.0.1:8000
 
-# 3. Probe it
 curl http://127.0.0.1:8000/health
 # {"status":"ok","service":"attestor","version":"0.0.1","environment":"development"}
+```
 
-# 4. Run the checks (everything green before any commit)
-ruff check .
-ruff format --check .
-pytest
+**2 · Frontend** (Node ≥ 20; built and tested on 24)
 
-# 5. Run the dashboard (separate terminal, with the API running)
-cd web && npm install && npm run dev    # http://localhost:3000
+```bash
+cd web
+npm install
+npm run dev                               # http://localhost:3000
+```
+
+The dashboard calls the API at `http://127.0.0.1:8000` by default. To point it elsewhere, set
+`NEXT_PUBLIC_API_BASE_URL` (read in [`web/lib/api.ts`](web/lib/api.ts)):
+
+```bash
+NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000 npm run dev
+```
+
+**Checks** (all green before any commit)
+
+```bash
+ruff check . && ruff format --check . && pytest   # engine
+cd web && npm run lint && npm run build           # dashboard
 ```
 
 Configuration is read from environment variables / a local `.env` (see
