@@ -28,6 +28,11 @@ from attestor.ledger.model import (
     SignedRoot,
     TimestampInfo,
 )
+from attestor.ledger.timestamp import (
+    build_timestamp_info,
+    request_timestamp,
+    verify_timestamp,
+)
 
 __all__ = [
     "InclusionProof",
@@ -36,13 +41,16 @@ __all__ = [
     "LedgerVerification",
     "SignedRoot",
     "TimestampInfo",
+    "build_timestamp_info",
     "generate_ledger_key",
     "load_ledger",
     "load_private_key",
     "load_public_key_hex",
     "prove_inclusion",
     "public_key_hex",
+    "request_timestamp",
     "root_commitment",
     "save_ledger",
     "seal",
+    "verify_timestamp",
 ]
