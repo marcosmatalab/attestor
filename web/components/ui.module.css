@@ -192,6 +192,12 @@
   accent-color: var(--accent);
 }
 
+@media (max-width: 560px) {
+  .checks {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Table */
 .tableWrap {
   overflow-x: auto;
