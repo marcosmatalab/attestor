@@ -85,7 +85,7 @@ Configuration is read from environment variables / a local `.env` (see
 | **F1** | Deterministic rule engine + bundle `v2026-08` (**legal-text dates**) + golden tests asserting **risk *and* effective dates**. Self-consistent on its own. | ✅ |
 | **F2** | **Additive:** Omnibus-scenario bundle + timeline resolution presenting **both** dates (legal text vs Omnibus provisional) + the "pending formal adoption" caveat. *No rewrite of F1 goldens.* | ✅ |
 | **F3** | Annex IV generator + **validated citations** (a citation that doesn't resolve is rejected) + PDF export | ✅ |
-| **F4** | C2PA signer — manifest (X.509) + RFC3161 timestamp, keys via KMS/HSM | ⏳ |
+| **F4** | C2PA signer — manifest (X.509) + RFC3161 timestamp, keys via KMS/HSM | ✅ |
 | **F5** | C2PA verifier — reports signer + assertions + the provenance **nuance** | ⏳ |
 | **F6** | Ledger Ed25519 + Merkle + RFC3161, **offline** verification via CLI | ⏳ |
 | **F7** | Governance: ISO/IEC 42001 mapping + FRIA (Art. 27) + Art. 12 logs | ⏳ |
@@ -205,6 +205,46 @@ pdf_bytes = render_pdf(dossier)                                   # deterministi
 - The bundle models a **representative subset** of the high-risk obligations, not the
   exhaustive list: e.g. Section 9 (Art. 72 post-market monitoring) is guidance with no
   derived citation, and Arts 18/19/20 are not yet modelled.
+
+---
+
+## C2PA content provenance — signer (F4)
+
+Signs an AI output with a C2PA manifest (Content Credentials) carrying an
+AI-generated marking (`c2pa.actions.v2` + the IPTC `trainedAlgorithmicMedia`
+source type) and an Attestor disclosure assertion. Built on `c2pa-python==0.36.0`.
+
+```python
+from attestor.provenance import ProvenanceMetadata, SignerConfig, generate_dev_cert, sign_asset
+
+generate_dev_cert("dev_chain.pem", "dev_key.pem")          # dev only — never commit
+config = SignerConfig(cert_path="dev_chain.pem", private_key_path="dev_key.pem")
+sign_asset("input.png", "signed.png", config,
+           ProvenanceMetadata(title="input.png", model="claude-opus-4-8"))
+```
+
+- **Signing via `Signer.from_callback`** — the same interface a KMS/HSM signer
+  uses (the key signs inside a callback), so dev (local key) and production (KMS)
+  share one code path. ES256 (EC P-256).
+- **RFC3161 timestamp** is optional (`RFC3161_TSA_URL`): when set, the TSA
+  countersignature gives the C2PA claim an AdES "T"-level trusted time, linking to
+  the F6 ledger. Without it, signing is fully offline.
+- **Keys are config-driven**, never hardcoded or committed. The dev certificate is
+  a self-signed **leaf + Root CA chain** (c2pa-rs rejects a lone self-signed cert).
+
+### What C2PA proves, and what this is not (honesty)
+
+- **C2PA proves PROVENANCE and INTEGRITY, not truth.** A valid Content Credential
+  shows the manifest is intact and identifies the signer — it does **not** assert
+  the content is real. **Absence** of a credential does **not** mean AI-generated;
+  **presence** does not mean the content is authentic.
+- **C2PA does not require declaring AI origin.** A validly signed asset may omit the
+  `digitalSourceType` entirely. Attestor *chooses* to include the disclosure (in
+  service of **Art. 50** of Reg. (EU) 2024/1689) — its presence is Attestor's choice,
+  not something C2PA imposes.
+- **The dev signer is an untrusted, self-signed certificate** — **not** on any C2PA
+  trust list. A verifier will mark the signer as untrusted; that trust nuance (and
+  the verifier itself) is **F5**.
 
 ---
 
