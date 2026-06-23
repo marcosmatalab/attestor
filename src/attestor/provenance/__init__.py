@@ -6,7 +6,10 @@ provenance/integrity signal, not proof of truth — see the README honesty note.
 """
 
 from attestor.provenance.devcert import generate_dev_cert
+from attestor.provenance.manifest import ProvenanceMetadata, build_manifest
 
 __all__ = [
+    "ProvenanceMetadata",
+    "build_manifest",
     "generate_dev_cert",
 ]
