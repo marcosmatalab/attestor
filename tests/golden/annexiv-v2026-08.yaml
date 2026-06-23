@@ -1,0 +1,69 @@
+# Golden vectors for the Annex IV dossier generator. Each case pins, for a fixed
+# classification, the per-section cited obligations + their effective dates, the
+# legal basis, and the appendix. Any drift fails the build. (Negative gate cases —
+# deployer / non-high-risk — are covered in test_annexiv_generator.py.)
+cases:
+  # 1. High-risk Annex III provider under the legal-text bundle.
+  - name: hiring_provider_legal_text
+    input: { role: provider, annex_iii_area: employment }
+    bundle: v2026-08
+    expected:
+      risk: high
+      scenario: legal-text
+      provisional_note: false
+      legal_basis: { id: art11_technical_documentation, reference: "Art. 11", effective_date: "2026-08-02" }
+      sections:
+        "1": [[art13_transparency_deployers, "2026-08-02"]]
+        "2": [[art10_data_governance, "2026-08-02"], [art14_human_oversight, "2026-08-02"]]
+        "3": [[art12_record_keeping, "2026-08-02"], [art13_transparency_deployers, "2026-08-02"], [art14_human_oversight, "2026-08-02"], [art15_accuracy_robustness, "2026-08-02"]]
+        "4": [[art15_accuracy_robustness, "2026-08-02"]]
+        "5": [[art9_risk_management, "2026-08-02"]]
+        "6": []
+        "7": [[art43_conformity_assessment, "2026-08-02"]]
+        "8": [[art47_eu_declaration, "2026-08-02"], [art48_ce_marking, "2026-08-02"]]
+        "9": []
+        "A": [[art16_provider_obligations, "2026-08-02"], [art17_quality_management, "2026-08-02"], [art49_registration, "2026-08-02"]]
+
+  # 2. Same profile under the Omnibus bundle — high-risk dates defer to 2027-12-02
+  #    and the provisional caveat is present.
+  - name: hiring_provider_omnibus
+    input: { role: provider, annex_iii_area: employment }
+    bundle: omnibus-2026
+    expected:
+      risk: high
+      scenario: omnibus
+      provisional_note: true
+      legal_basis: { id: art11_technical_documentation, reference: "Art. 11", effective_date: "2027-12-02" }
+      sections:
+        "1": [[art13_transparency_deployers, "2027-12-02"]]
+        "2": [[art10_data_governance, "2027-12-02"], [art14_human_oversight, "2027-12-02"]]
+        "3": [[art12_record_keeping, "2027-12-02"], [art13_transparency_deployers, "2027-12-02"], [art14_human_oversight, "2027-12-02"], [art15_accuracy_robustness, "2027-12-02"]]
+        "4": [[art15_accuracy_robustness, "2027-12-02"]]
+        "5": [[art9_risk_management, "2027-12-02"]]
+        "6": []
+        "7": [[art43_conformity_assessment, "2027-12-02"]]
+        "8": [[art47_eu_declaration, "2027-12-02"], [art48_ce_marking, "2027-12-02"]]
+        "9": []
+        "A": [[art16_provider_obligations, "2027-12-02"], [art17_quality_management, "2027-12-02"], [art49_registration, "2027-12-02"]]
+
+  # 3. High-risk provider that is also a GPAI provider — gpai_art53 lands in the
+  #    appendix (default-to-appendix) at its own 2025-08-02 date.
+  - name: gpai_provider_legal_text
+    input: { role: provider, annex_iii_area: biometrics, is_gpai: true }
+    bundle: v2026-08
+    expected:
+      risk: high
+      scenario: legal-text
+      provisional_note: false
+      legal_basis: { id: art11_technical_documentation, reference: "Art. 11", effective_date: "2026-08-02" }
+      sections:
+        "1": [[art13_transparency_deployers, "2026-08-02"]]
+        "2": [[art10_data_governance, "2026-08-02"], [art14_human_oversight, "2026-08-02"]]
+        "3": [[art12_record_keeping, "2026-08-02"], [art13_transparency_deployers, "2026-08-02"], [art14_human_oversight, "2026-08-02"], [art15_accuracy_robustness, "2026-08-02"]]
+        "4": [[art15_accuracy_robustness, "2026-08-02"]]
+        "5": [[art9_risk_management, "2026-08-02"]]
+        "6": []
+        "7": [[art43_conformity_assessment, "2026-08-02"]]
+        "8": [[art47_eu_declaration, "2026-08-02"], [art48_ce_marking, "2026-08-02"]]
+        "9": []
+        "A": [[art16_provider_obligations, "2026-08-02"], [art17_quality_management, "2026-08-02"], [art49_registration, "2026-08-02"], [gpai_art53_documentation, "2025-08-02"]]
