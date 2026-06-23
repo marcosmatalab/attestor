@@ -7,10 +7,12 @@ complete and which obligations/articles/dates apply — it does not write the
 technical content (that needs real system data; sections carry placeholders).
 """
 
+from attestor.annexiv.generator import generate_dossier
 from attestor.annexiv.model import AnnexIVDossier, Citation, DossierSection
 
 __all__ = [
     "AnnexIVDossier",
     "Citation",
     "DossierSection",
+    "generate_dossier",
 ]
