@@ -88,7 +88,7 @@ Configuration is read from environment variables / a local `.env` (see
 | **F4** | C2PA signer — manifest (X.509) + RFC3161 timestamp, keys via KMS/HSM | ✅ |
 | **F5** | C2PA verifier — reports signer + assertions + the provenance **nuance** | ✅ |
 | **F6** | Ledger Ed25519 + Merkle + RFC3161, **offline** verification via CLI | ✅ |
-| **F7** | Governance: ISO/IEC 42001 mapping + FRIA (Art. 27) + Art. 12 logs | ⏳ |
+| **F7** | Governance: ISO/IEC 42001 mapping + FRIA (Art. 27) + Art. 12 logs | ✅ |
 | **F8** | Dashboard (Next.js) + polish + demo | ⏳ |
 
 > **Bundle schema note (F1 design constraint):** effective dates are stored
@@ -352,6 +352,55 @@ python -m attestor.ledger out/ledger
 
 ---
 
+## Governance artifacts — crosswalk, FRIA scaffold, Art. 12 logs (F7)
+
+Three **deterministic** artifacts derived from the classification that **help address**
+governance obligations. Read the honesty limits below carefully: none of them is an
+audit, certification, completed assessment, or statement of conformity.
+
+```python
+from attestor.classifier import SystemProfile, classify, load_bundle
+from attestor.governance import Art12Event, Art12EventType, Art12Log, derive_crosswalk, generate_fria
+
+bundle = load_bundle("v2026-08")
+profile = SystemProfile(role="deployer", deployer_type="public_body", annex_iii_area="employment")
+classification = classify(profile, bundle)
+
+crosswalk = derive_crosswalk(classification)    # AI Act obligation → ISO/IEC 42001 clauses + Annex A
+fria = generate_fria(profile, classification)   # Art. 27(1)(a)–(f) scaffold (raises if FRIA doesn't apply)
+
+log = Art12Log()
+log.record(Art12Event(event_type=Art12EventType.risk_situation, occurred_at="2026-08-03T10:00:00+00:00"))
+signed = log.seal(ledger_key)                   # tamper-evident, offline-verifiable via the F6 ledger
+```
+
+- **ISO/IEC 42001 crosswalk.** For each applied AI Act obligation it points to the related
+  ISO/IEC 42001:2023 clauses (4–10) and Annex A control groups (A.2–A.10). A defensible
+  design map (like the F3 obligation→section map), built only from obligations actually
+  emitted; AI-Act-specific procedures with no clean 42001 analogue are omitted, not stretched.
+- **FRIA scaffold (Art. 27).** Derived from a deployer classification, **gated** on the
+  classifier's `art27_fria` decision (it raises if the FRIA does not apply). It enumerates
+  Art. 27(1)(a)–(f) with explicit `[TO BE COMPLETED]` placeholders.
+- **Art. 12 audit log.** Typed events for what Art. 12(2)/(3) require, recorded into the F6
+  ledger so the log is tamper-evident and offline-verifiable — altering an event breaks
+  verification.
+
+### What these are, and what they are not (honesty)
+
+- **Crosswalk, not audit.** The ISO/IEC 42001 mapping is a **reference crosswalk** to locate
+  relevant clauses/controls — **not** an audit, certification, gap assessment, or statement
+  of conformity. It cites only clause/control **identifiers** and short group headings; it
+  reproduces **no normative text** (ISO/IEC 42001 is a paid standard). The Annex A numbering
+  is pinned to ISO/IEC 42001:2023 (A.5–A.10), which several secondary sources get wrong.
+- **Scaffold, not a completed FRIA.** Applicability is decided by the classifier, not
+  re-litigated here; the output is a structure to be filled in after substantive analysis.
+  Generating it neither constitutes nor substitutes for the assessment.
+- **Capability, not conformity.** An Art. 12 logging capability is **necessary but not
+  sufficient** for Art. 12 conformity. Recording events — even tamper-evidently — does not by
+  itself make a system compliant.
+
+---
+
 ## Stack
 
 | Layer | Technology |
@@ -362,6 +411,7 @@ python -m attestor.ledger out/ledger
 | C2PA keys | KMS/HSM (AWS KMS) in production; local file in dev |
 | Timestamp | RFC3161 TSA (AdES "T" level) |
 | Ledger | Ed25519 (`cryptography`) + custom Merkle tree + RFC3161 |
+| Governance | ISO/IEC 42001 reference crosswalk + FRIA (Art. 27) scaffold + Art. 12 logs |
 | Backend | FastAPI + PostgreSQL (multi-tenant RLS) |
 | Frontend | Next.js (registration, compliance dashboard, verifier) |
 | PDF | Annex IV dossier + evidence export |
@@ -393,6 +443,10 @@ disclaimers — knowing them is the difference between a junior and a senior tak
   no consensus: the operator holds the key and can still rewrite history that has not
   yet been signed and timestamped. Its guarantees follow from anchoring roots regularly,
   and timestamp trust depends on the TSA (reported separately from tampering).
+- **Governance artifacts help; they do not certify.** The ISO/IEC 42001 mapping is a
+  reference crosswalk (IDs, no normative text), the FRIA is a scaffold to be completed by
+  the deployer, and the Art. 12 log is a capability — necessary, not sufficient, for
+  conformity. None is an audit, certification, completed assessment, or conformity statement.
 
 ---
 
