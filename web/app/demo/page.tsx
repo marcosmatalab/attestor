@@ -2,6 +2,17 @@
 
 import { useState } from "react";
 import { api, type DemoResult } from "@/lib/api";
+import { LedgerCard } from "@/components/LedgerCard";
+import { ProvenanceCard } from "@/components/ProvenanceCard";
+import { Badge, Button, Callout, Card, KeyValue, KV, Mono, Skeleton, type Tone } from "@/components/ui";
+import sx from "@/components/sections.module.css";
+
+const RISK_TONE: Record<string, Tone> = {
+  prohibited: "prohibited",
+  high: "high",
+  limited: "limited",
+  minimal: "minimal",
+};
 
 export default function DemoPage() {
   const [result, setResult] = useState<DemoResult | null>(null);
@@ -14,7 +25,7 @@ export default function DemoPage() {
     try {
       setResult(await api.demo());
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Request failed");
+      setError(err instanceof Error ? err.message : "The request failed.");
     } finally {
       setLoading(false);
     }
@@ -22,98 +33,55 @@ export default function DemoPage() {
 
   return (
     <>
-      <h2>End-to-end demo</h2>
-      <p className="lead">
+      <h1 className={sx.title}>End-to-end demo</h1>
+      <p className={sx.lead}>
         One example path for a high-risk <strong>provider</strong>: classify → Annex IV → sign an AI
-        output (C2PA) → verify → anchor in the ledger → verify the ledger offline. Every output below
-        is produced live by the engine; signing and sealing use ephemeral dev keys generated per run.
+        output (C2PA) → verify → anchor in the ledger → verify the ledger offline. Every output is
+        produced live by the engine; signing and sealing use ephemeral dev keys generated per run.
       </p>
 
-      <div className="card">
-        <button onClick={run} disabled={loading}>
+      <Card>
+        <Button onClick={run} busy={loading}>
           {loading ? "Running the pipeline…" : "Run the demo"}
-        </button>
-      </div>
+        </Button>
+      </Card>
 
-      {error && <div className="error">{error}</div>}
-      {result && <DemoView result={result} />}
-    </>
-  );
-}
-
-function DemoView({ result }: { result: DemoResult }) {
-  const prov = result.provenance;
-  const ledger = result.ledger.verification;
-  return (
-    <>
-      <div className="card">
-        <h3>1 · Classification</h3>
-        <div style={{ marginBottom: 8 }}>
-          <span className={`badge ${result.classification.risk}`}>{result.classification.risk}</span>
-        </div>
-        <div className="kv">
-          <span className="k">Checksum</span>
-          <span className="mono">{result.classification.checksum}</span>
-        </div>
-        <div className="kv">
-          <span className="k">Annex IV</span>
-          <span>
-            {result.annex_iv.system_name} — {result.annex_iv.sections.length} sections
-          </span>
-        </div>
-      </div>
-
-      <div className="card">
-        <h3>2 · C2PA provenance</h3>
-        <div style={{ marginBottom: 8 }}>
-          <span className={`badge ${prov.trusted ? "ok" : "warn"}`}>
-            {prov.trusted ? "signer trusted" : "signer untrusted"}
-          </span>
-        </div>
-        <p className="mono">{prov.headline}</p>
-        <div className="caveat">
-          Integrity (<strong>{prov.validation_state}</strong>) means the manifest is intact — it does
-          <strong> not</strong> mean the signer is trusted. The demo&apos;s dev certificate is on no
-          C2PA trust list, so the signer is reported <strong>untrusted</strong>. &quot;Valid&quot; is
-          never shown without the trust qualifier.
-        </div>
-        {prov.signer && (
-          <div className="kv">
-            <span className="k">Signer</span>
-            <span>
-              {prov.signer.common_name} · {prov.signer.algorithm}
-            </span>
-          </div>
+      <div className={sx.results} aria-live="polite" aria-busy={loading}>
+        {error && (
+          <Callout tone="error" role="alert">
+            {error}
+          </Callout>
         )}
-        {prov.ai_disclosure && (
-          <div className="kv">
-            <span className="k">AI disclosure</span>
-            <span className="mono">{prov.ai_disclosure.digital_source_type ?? "—"}</span>
-          </div>
+        {loading && (
+          <Card title="Running the pipeline…">
+            <Skeleton lines={4} />
+          </Card>
         )}
-      </div>
-
-      <div className="card">
-        <h3>3 · Ledger (offline verification)</h3>
-        <div style={{ marginBottom: 8 }}>
-          <span className={`badge ${ledger.verified ? "ok" : "warn"}`}>
-            {ledger.verified ? "verified" : "tampered"}
-          </span>
-        </div>
-        <p className="mono">{ledger.headline}</p>
-        <div className="kv">
-          <span className="k">Merkle root</span>
-          <span className="mono">{result.ledger.signed_root.merkle_root}</span>
-        </div>
-        <div className="kv">
-          <span className="k">Anchored records</span>
-          <span>{result.ledger.records.length}</span>
-        </div>
-        <div className="note">
-          An append-only log with cryptographic integrity, verifiable offline by a third party —
-          <strong> not a blockchain</strong> (no distribution, no consensus). The integrity and
-          signature decide the verdict; TSA trust, when present, is reported separately.
-        </div>
+        {!loading && result && (
+          <>
+            <Card title="Classification">
+              <div className={sx.badgeRow}>
+                <Badge tone={RISK_TONE[result.classification.risk] ?? "neutral"}>
+                  {result.classification.risk}
+                </Badge>
+              </div>
+              <KeyValue>
+                <KV k="Checksum">
+                  <Mono>{result.classification.checksum}</Mono>
+                </KV>
+                <KV k="Annex IV">
+                  {result.annex_iv.system_name} — {result.annex_iv.sections.length} sections
+                </KV>
+              </KeyValue>
+            </Card>
+            <ProvenanceCard prov={result.provenance} />
+            <LedgerCard
+              ledger={result.ledger.verification}
+              merkleRoot={result.ledger.signed_root.merkle_root}
+              records={result.ledger.records.length}
+            />
+          </>
+        )}
       </div>
     </>
   );
