@@ -32,7 +32,7 @@ jobs:
         run: pytest
 
   frontend:
-    name: Frontend build (Node 24)
+    name: Frontend build & test (Node 24)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -54,5 +54,12 @@ jobs:
       - name: ESLint
         run: npm run lint
 
-      - name: Build (Turbopack, type-checked)
+      # Build first: Next generates next-env.d.ts + .next/types that the type-check needs.
+      - name: Build (Turbopack)
         run: npm run build
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Unit tests (Vitest)
+        run: npm test
