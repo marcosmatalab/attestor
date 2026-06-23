@@ -34,6 +34,10 @@ class Bundle:
         return self.content["meta"]["version"]
 
     @property
+    def meta(self) -> dict[str, Any]:
+        return self.content["meta"]
+
+    @property
     def risk_tier_rules(self) -> list[dict[str, Any]]:
         return self.content["risk_tier_rules"]
 
