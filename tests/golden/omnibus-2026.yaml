@@ -1,0 +1,147 @@
+# Golden vectors for bundle omnibus-2026 (Digital Omnibus, provisional).
+# Asserts the Omnibus effective dates. The legal-text golden (v2026-08.yaml) is
+# FROZEN and untouched — its non-modification is the proof that F2 is additive.
+vectors:
+  # 1. High-risk Annex III provider — DELTA 1: full set @ 2027-12-02.
+  - name: hiring_provider_high_risk
+    input: { role: provider, annex_iii_area: employment }
+    expected:
+      risk: high
+      obligations:
+        - { id: art9_risk_management, effective_date: "2027-12-02" }
+        - { id: art10_data_governance, effective_date: "2027-12-02" }
+        - { id: art11_technical_documentation, effective_date: "2027-12-02" }
+        - { id: art12_record_keeping, effective_date: "2027-12-02" }
+        - { id: art13_transparency_deployers, effective_date: "2027-12-02" }
+        - { id: art14_human_oversight, effective_date: "2027-12-02" }
+        - { id: art15_accuracy_robustness, effective_date: "2027-12-02" }
+        - { id: art16_provider_obligations, effective_date: "2027-12-02" }
+        - { id: art17_quality_management, effective_date: "2027-12-02" }
+        - { id: art43_conformity_assessment, effective_date: "2027-12-02" }
+        - { id: art47_eu_declaration, effective_date: "2027-12-02" }
+        - { id: art48_ce_marking, effective_date: "2027-12-02" }
+        - { id: art49_registration, effective_date: "2027-12-02" }
+
+  # 2. High-risk deployer (public body) → FRIA, both @ 2027-12-02.
+  - name: hiring_deployer_public_fria
+    input: { role: deployer, annex_iii_area: employment, deployer_type: public_body }
+    expected:
+      risk: high
+      obligations:
+        - { id: art26_6_log_retention, effective_date: "2027-12-02" }
+        - { id: art27_fria, effective_date: "2027-12-02" }
+
+  # 3. High-risk deployer (other) → no FRIA, log retention @ 2027-12-02.
+  - name: hiring_deployer_other_no_fria
+    input: { role: deployer, annex_iii_area: employment, deployer_type: other }
+    expected:
+      risk: high
+      obligations:
+        - { id: art26_6_log_retention, effective_date: "2027-12-02" }
+
+  # 4. Credit scoring deployer (private) → FRIA via branch B, @ 2027-12-02.
+  - name: credit_scoring_deployer_private_fria
+    input: { role: deployer, annex_iii_area: credit_scoring, deployer_type: other }
+    expected:
+      risk: high
+      obligations:
+        - { id: art26_6_log_retention, effective_date: "2027-12-02" }
+        - { id: art27_fria, effective_date: "2027-12-02" }
+
+  # 5. Annex I embedded provider — DELTA 2: set @ 2028-08-02 (no Art. 49).
+  - name: annex_i_embedded_provider
+    input: { role: provider, annex_i_embedded: true }
+    expected:
+      risk: high
+      obligations:
+        - { id: art9_risk_management, effective_date: "2028-08-02" }
+        - { id: art10_data_governance, effective_date: "2028-08-02" }
+        - { id: art11_technical_documentation, effective_date: "2028-08-02" }
+        - { id: art12_record_keeping, effective_date: "2028-08-02" }
+        - { id: art13_transparency_deployers, effective_date: "2028-08-02" }
+        - { id: art14_human_oversight, effective_date: "2028-08-02" }
+        - { id: art15_accuracy_robustness, effective_date: "2028-08-02" }
+        - { id: art16_provider_obligations, effective_date: "2028-08-02" }
+        - { id: art17_quality_management, effective_date: "2028-08-02" }
+        - { id: art43_conformity_assessment, effective_date: "2028-08-02" }
+        - { id: art47_eu_declaration, effective_date: "2028-08-02" }
+        - { id: art48_ce_marking, effective_date: "2028-08-02" }
+
+  # 6. Image generator, new content → 50(2) @ 2026-08-02 (unchanged).
+  - name: imagegen_new_provider
+    input: { role: provider, generates_synthetic_content: true, content_lifecycle: new }
+    expected:
+      risk: limited
+      obligations:
+        - { id: art50_2_marking, effective_date: "2026-08-02" }
+
+  # 7. Image generator, LEGACY content — DELTA 3: 50(2) @ 2026-12-02 (split returns).
+  - name: imagegen_legacy_provider
+    input: { role: provider, generates_synthetic_content: true, content_lifecycle: legacy }
+    expected:
+      risk: limited
+      obligations:
+        - { id: art50_2_marking, effective_date: "2026-12-02" }
+
+  # 8. Chatbot → 50(1) @ 2026-08-02 (unchanged by the Omnibus).
+  - name: chatbot_provider_limited
+    input: { role: provider, interacts_with_humans: true }
+    expected:
+      risk: limited
+      obligations:
+        - { id: art50_1_chatbot, effective_date: "2026-08-02" }
+
+  # 9. Nudifier, NO safeguards — DELTA 4: prohibited @ 2026-12-02 (50(2) dropped).
+  - name: nudifier_no_safeguards_prohibited
+    input: { role: provider, generates_ncii_or_csam: true, generates_synthetic_content: true, content_lifecycle: new }
+    expected:
+      risk: prohibited
+      obligations:
+        - { id: art5_nudifier_ncii_csam, effective_date: "2026-12-02" }
+
+  # 10. Nudifier WITH safeguards → safe harbour: not prohibited, just limited (50(2)).
+  - name: nudifier_with_safeguards_limited
+    input: { role: provider, generates_ncii_or_csam: true, ncii_csam_safeguards: true, generates_synthetic_content: true, content_lifecycle: new }
+    expected:
+      risk: limited
+      obligations:
+        - { id: art50_2_marking, effective_date: "2026-08-02" }
+
+  # 11. GPAI-only systemic → minimal tier, GPAI track @ 2025-08-02 (unchanged).
+  - name: gpai_only_systemic_minimal
+    input: { role: provider, is_gpai: true, is_gpai_systemic: true }
+    expected:
+      risk: minimal
+      obligations:
+        - { id: gpai_art53_documentation, effective_date: "2025-08-02" }
+        - { id: gpai_art55_systemic_risk, effective_date: "2025-08-02" }
+
+  # 12. Original Art. 5 prohibition unchanged @ 2025-02-02.
+  - name: prohibited_social_scoring
+    input: { role: provider, prohibited_practice: social_scoring }
+    expected:
+      risk: prohibited
+      obligations:
+        - { id: art5_prohibition, effective_date: "2025-02-02" }
+
+  # 13. Intersection: high-risk Annex III + chatbot. High-risk set defers to
+  #     2027-12-02 while Art. 50(1) stays 2026-08-02 — per-obligation divergence.
+  - name: high_risk_and_chatbot_intersection
+    input: { role: provider, annex_iii_area: employment, interacts_with_humans: true }
+    expected:
+      risk: high
+      obligations:
+        - { id: art9_risk_management, effective_date: "2027-12-02" }
+        - { id: art10_data_governance, effective_date: "2027-12-02" }
+        - { id: art11_technical_documentation, effective_date: "2027-12-02" }
+        - { id: art12_record_keeping, effective_date: "2027-12-02" }
+        - { id: art13_transparency_deployers, effective_date: "2027-12-02" }
+        - { id: art14_human_oversight, effective_date: "2027-12-02" }
+        - { id: art15_accuracy_robustness, effective_date: "2027-12-02" }
+        - { id: art16_provider_obligations, effective_date: "2027-12-02" }
+        - { id: art17_quality_management, effective_date: "2027-12-02" }
+        - { id: art43_conformity_assessment, effective_date: "2027-12-02" }
+        - { id: art47_eu_declaration, effective_date: "2027-12-02" }
+        - { id: art48_ce_marking, effective_date: "2027-12-02" }
+        - { id: art49_registration, effective_date: "2027-12-02" }
+        - { id: art50_1_chatbot, effective_date: "2026-08-02" }

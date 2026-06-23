@@ -1,0 +1,146 @@
+# =============================================================================
+# Attestor regulatory bundle — EU AI Act as amended by the DIGITAL OMNIBUS on AI
+# Scenario: omnibus (PROVISIONAL — see meta.status / meta.status_note)
+# -----------------------------------------------------------------------------
+# This is a COMPLETE, self-contained, content-hashable bundle — NOT a diff over
+# v2026-08. Each bundle is an independently auditable unit with its own sha256
+# (the F6 ledger anchors bundle hashes), so the duplication here is intentional.
+#
+# Deltas vs the legal-text bundle (v2026-08) — ONLY these change:
+#   1. High-risk Annex III stand-alone:  2026-08-02 -> 2027-12-02
+#   2. High-risk Annex I embedded:       2027-08-02 -> 2028-08-02
+#   3. Art. 50(2) marking: split by content_lifecycle — new 2026-08-02,
+#      legacy 2026-12-02 (the legal text did not branch; the Omnibus does).
+#   4. Art. 5: NEW prohibition — AI generating NCII (nudifiers) / CSAM, 2026-12-02,
+#      with a safe harbour (adequate technical safeguards). The other 8 unchanged.
+# Everything else (Art. 50(1)/(3)/(4), GPAI, the original Art. 5 list) is identical.
+# =============================================================================
+
+meta:
+  version: "omnibus-2026"
+  regulation: "EU AI Act (Reg. (EU) 2024/1689) as amended by the Digital Omnibus on AI"
+  scenario: "omnibus"
+  status: "pending-formal-adoption"
+  status_note: >-
+    Provisional — not yet in force (as of 2026-06-23). The European Parliament
+    approved the Digital Omnibus on AI on 2026-06-16; the Council's formal
+    adoption is expected on 2026-06-29, after which it would be published in the
+    Official Journal (OJEU) and enter into force. Until then the binding timeline
+    remains the legal-text scenario (Regulation (EU) 2024/1689, bundle v2026-08).
+  description: >-
+    Digital Omnibus overlay: defers Annex III high-risk to 2027-12-02 and Annex I
+    embedded to 2028-08-02, re-introduces the Art. 50(2) legacy/new marking split,
+    and adds the Art. 5 NCII/CSAM prohibition (2026-12-02, with a safe harbour).
+
+# --- Article index (every obligation `reference` resolves here) -----------------
+articles:
+  "Art. 5(1)": "Prohibited AI practices"
+  "Art. 9": "Risk management system"
+  "Art. 10": "Data and data governance"
+  "Art. 11": "Technical documentation"
+  "Art. 12": "Record-keeping (logs)"
+  "Art. 13": "Transparency and provision of information to deployers"
+  "Art. 14": "Human oversight"
+  "Art. 15": "Accuracy, robustness and cybersecurity"
+  "Art. 16": "Obligations of providers of high-risk AI systems"
+  "Art. 17": "Quality management system"
+  "Art. 26(6)": "Deployer obligation to retain automatically generated logs"
+  "Art. 27": "Fundamental rights impact assessment (FRIA)"
+  "Art. 43": "Conformity assessment"
+  "Art. 47": "EU declaration of conformity"
+  "Art. 48": "CE marking of conformity"
+  "Art. 49": "Registration in the EU database"
+  "Art. 50(1)": "Transparency — AI systems interacting with natural persons"
+  "Art. 50(2)": "Transparency — marking of synthetic content"
+  "Art. 50(3)": "Transparency — emotion recognition / biometric categorisation"
+  "Art. 50(4)": "Transparency — disclosure of deep fakes"
+  "Art. 53": "Obligations for providers of general-purpose AI models"
+  "Art. 55": "Obligations for providers of GPAI models with systemic risk"
+
+# --- Risk tier rules: ORDER = PRECEDENCE; first match wins ----------------------
+risk_tier_rules:
+  - { id: prohibited_practice, when: { has_prohibited_practice: true }, tier: prohibited }
+  - { id: prohibited_nudifier, when: { nudifier_prohibited: true },     tier: prohibited }  # Omnibus Art. 5
+  - { id: high_annex_iii,      when: { has_annex_iii_area: true },       tier: high }
+  - { id: high_annex_i,        when: { annex_i_embedded: true },         tier: high }
+  - { id: limited,             when: { any_art50_trigger: true },        tier: limited }
+  - { id: minimal,             when: {},                                 tier: minimal }
+
+# --- Obligation rules: ALL matches emit; date is on the rule --------------------
+obligation_rules:
+  # ----- Prohibited (Art. 5) -----
+  - { obligation: art5_prohibition,        when: { has_prohibited_practice: true }, effective_date: "2025-02-02" }  # 8 originals: unchanged
+  - { obligation: art5_nudifier_ncii_csam, when: { nudifier_prohibited: true },     effective_date: "2026-12-02" }  # DELTA 4
+
+  # ----- High-risk · Annex III · provider (DELTA 1: 2026-08-02 -> 2027-12-02) -----
+  - { obligation: art9_risk_management,        when: { risk_tier: high, has_annex_iii_area: true, role: provider }, effective_date: "2027-12-02" }
+  - { obligation: art10_data_governance,       when: { risk_tier: high, has_annex_iii_area: true, role: provider }, effective_date: "2027-12-02" }
+  - { obligation: art11_technical_documentation, when: { risk_tier: high, has_annex_iii_area: true, role: provider }, effective_date: "2027-12-02" }
+  - { obligation: art12_record_keeping,        when: { risk_tier: high, has_annex_iii_area: true, role: provider }, effective_date: "2027-12-02" }
+  - { obligation: art13_transparency_deployers, when: { risk_tier: high, has_annex_iii_area: true, role: provider }, effective_date: "2027-12-02" }
+  - { obligation: art14_human_oversight,       when: { risk_tier: high, has_annex_iii_area: true, role: provider }, effective_date: "2027-12-02" }
+  - { obligation: art15_accuracy_robustness,   when: { risk_tier: high, has_annex_iii_area: true, role: provider }, effective_date: "2027-12-02" }
+  - { obligation: art16_provider_obligations,  when: { risk_tier: high, has_annex_iii_area: true, role: provider }, effective_date: "2027-12-02" }
+  - { obligation: art17_quality_management,    when: { risk_tier: high, has_annex_iii_area: true, role: provider }, effective_date: "2027-12-02" }
+  - { obligation: art43_conformity_assessment, when: { risk_tier: high, has_annex_iii_area: true, role: provider }, effective_date: "2027-12-02" }
+  - { obligation: art47_eu_declaration,        when: { risk_tier: high, has_annex_iii_area: true, role: provider }, effective_date: "2027-12-02" }
+  - { obligation: art48_ce_marking,            when: { risk_tier: high, has_annex_iii_area: true, role: provider }, effective_date: "2027-12-02" }
+  - { obligation: art49_registration,          when: { risk_tier: high, has_annex_iii_area: true, role: provider }, effective_date: "2027-12-02" }
+
+  # ----- High-risk · Annex I embedded · provider (DELTA 2: 2027-08-02 -> 2028-08-02) -----
+  - { obligation: art9_risk_management,        when: { risk_tier: high, annex_i_embedded: true, role: provider }, effective_date: "2028-08-02" }
+  - { obligation: art10_data_governance,       when: { risk_tier: high, annex_i_embedded: true, role: provider }, effective_date: "2028-08-02" }
+  - { obligation: art11_technical_documentation, when: { risk_tier: high, annex_i_embedded: true, role: provider }, effective_date: "2028-08-02" }
+  - { obligation: art12_record_keeping,        when: { risk_tier: high, annex_i_embedded: true, role: provider }, effective_date: "2028-08-02" }
+  - { obligation: art13_transparency_deployers, when: { risk_tier: high, annex_i_embedded: true, role: provider }, effective_date: "2028-08-02" }
+  - { obligation: art14_human_oversight,       when: { risk_tier: high, annex_i_embedded: true, role: provider }, effective_date: "2028-08-02" }
+  - { obligation: art15_accuracy_robustness,   when: { risk_tier: high, annex_i_embedded: true, role: provider }, effective_date: "2028-08-02" }
+  - { obligation: art16_provider_obligations,  when: { risk_tier: high, annex_i_embedded: true, role: provider }, effective_date: "2028-08-02" }
+  - { obligation: art17_quality_management,    when: { risk_tier: high, annex_i_embedded: true, role: provider }, effective_date: "2028-08-02" }
+  - { obligation: art43_conformity_assessment, when: { risk_tier: high, annex_i_embedded: true, role: provider }, effective_date: "2028-08-02" }
+  - { obligation: art47_eu_declaration,        when: { risk_tier: high, annex_i_embedded: true, role: provider }, effective_date: "2028-08-02" }
+  - { obligation: art48_ce_marking,            when: { risk_tier: high, annex_i_embedded: true, role: provider }, effective_date: "2028-08-02" }
+
+  # ----- High-risk · deployer (follows the annex pathway date) -----
+  - { obligation: art26_6_log_retention, when: { risk_tier: high, role: deployer, has_annex_iii_area: true }, effective_date: "2027-12-02" }
+  - { obligation: art26_6_log_retention, when: { risk_tier: high, role: deployer, annex_i_embedded: true },   effective_date: "2028-08-02" }
+  - { obligation: art27_fria, when: { risk_tier: high, role: deployer, deployer_type: [public_body, private_public_service], fria_eligible_area: true }, effective_date: "2027-12-02" }
+  - { obligation: art27_fria, when: { risk_tier: high, role: deployer, annex_iii_area: [credit_scoring, life_health_insurance] }, effective_date: "2027-12-02" }
+
+  # ----- Limited · Art. 50 -----
+  - { obligation: art50_1_chatbot,           when: { interacts_with_humans: true, role: provider },       effective_date: "2026-08-02" }  # unchanged
+  # DELTA 3: Art. 50(2) marking split by content lifecycle
+  - { obligation: art50_2_marking,           when: { generates_synthetic_content: true, role: provider, content_lifecycle: new },    effective_date: "2026-08-02" }
+  - { obligation: art50_2_marking,           when: { generates_synthetic_content: true, role: provider, content_lifecycle: legacy }, effective_date: "2026-12-02" }
+  - { obligation: art50_3_emotion_biometric, when: { informs_emotion_biometric: true, role: deployer },   effective_date: "2026-08-02" }  # unchanged
+  - { obligation: art50_4_deepfake,          when: { generates_deepfakes: true, role: deployer },         effective_date: "2026-08-02" }  # unchanged
+
+  # ----- GPAI · transversal (unchanged) -----
+  - { obligation: gpai_art53_documentation, when: { is_gpai: true },          effective_date: "2025-08-02" }
+  - { obligation: gpai_art55_systemic_risk, when: { is_gpai_systemic: true }, effective_date: "2025-08-02" }
+
+# --- Obligation catalog: reference + title (+ category for prohibitions) ---------
+obligations:
+  art5_prohibition:            { reference: "Art. 5(1)", title: "Prohibited practice — must not be placed on the market or put into service", category: "prohibition" }
+  art5_nudifier_ncii_csam:     { reference: "Art. 5(1)", title: "Prohibited practice (Digital Omnibus) — AI generating non-consensual intimate imagery / CSAM", category: "prohibition" }
+  art9_risk_management:        { reference: "Art. 9",    title: "Risk management system" }
+  art10_data_governance:       { reference: "Art. 10",   title: "Data and data governance" }
+  art11_technical_documentation: { reference: "Art. 11", title: "Technical documentation" }
+  art12_record_keeping:        { reference: "Art. 12",   title: "Record-keeping (logs)" }
+  art13_transparency_deployers: { reference: "Art. 13",  title: "Transparency and provision of information to deployers" }
+  art14_human_oversight:       { reference: "Art. 14",   title: "Human oversight" }
+  art15_accuracy_robustness:   { reference: "Art. 15",   title: "Accuracy, robustness and cybersecurity" }
+  art16_provider_obligations:  { reference: "Art. 16",   title: "Obligations of providers of high-risk AI systems" }
+  art17_quality_management:    { reference: "Art. 17",   title: "Quality management system" }
+  art26_6_log_retention:       { reference: "Art. 26(6)", title: "Deployer retention of automatically generated logs" }
+  art27_fria:                  { reference: "Art. 27",   title: "Fundamental rights impact assessment" }
+  art43_conformity_assessment: { reference: "Art. 43",   title: "Conformity assessment" }
+  art47_eu_declaration:        { reference: "Art. 47",   title: "EU declaration of conformity" }
+  art48_ce_marking:            { reference: "Art. 48",   title: "CE marking of conformity" }
+  art49_registration:          { reference: "Art. 49",   title: "Registration in the EU database" }
+  art50_1_chatbot:             { reference: "Art. 50(1)", title: "Disclosure that a person is interacting with an AI system" }
+  art50_2_marking:             { reference: "Art. 50(2)", title: "Machine-readable marking of synthetic content" }
+  art50_3_emotion_biometric:   { reference: "Art. 50(3)", title: "Disclosure of emotion recognition / biometric categorisation" }
+  art50_4_deepfake:            { reference: "Art. 50(4)", title: "Disclosure that content is an artificially generated deep fake" }
+  gpai_art53_documentation:    { reference: "Art. 53",   title: "GPAI model provider documentation obligations" }
+  gpai_art55_systemic_risk:    { reference: "Art. 55",   title: "GPAI model with systemic risk — additional obligations" }
