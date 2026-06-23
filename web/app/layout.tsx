@@ -1,10 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import Link from "next/link";
+import localFont from "next/font/local";
 import "./globals.css";
+import { HonestyBanner } from "@/components/HonestyBanner";
+import { SiteHeader } from "@/components/SiteHeader";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+// Self-hosted (vendored) variable fonts — no network at build time, so the build is offline
+// and self-contained, consistent with the rest of the project. Licenses live in app/fonts/.
+const inter = localFont({
+  src: "./fonts/inter-variable.woff2",
+  variable: "--font-inter",
+  weight: "100 900",
+  display: "swap",
+});
+const jetbrainsMono = localFont({
+  src: "./fonts/jetbrains-mono-variable.woff2",
+  variable: "--font-jbmono",
+  weight: "100 800",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Attestor — EU AI Act compliance engine (portfolio demo)",
@@ -14,26 +27,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body>
-        <header className="site-header">
-          <div className="container">
-            <h1>
-              Attestor <span className="tagline">deterministic EU AI Act engine</span>
-            </h1>
-            <nav>
-              <Link href="/">Classify</Link>
-              <Link href="/demo">End-to-end demo</Link>
-            </nav>
-          </div>
-        </header>
-        <div className="honesty">
-          <div className="container">
-            <strong>Portfolio demonstration — not legal advice, not a compliance product.</strong>{" "}
-            Every figure, date, checksum, and verdict below comes from a deterministic engine; the
-            UI only displays it. No system is &quot;compliant&quot; or &quot;certified&quot; by this tool.
-          </div>
-        </div>
+        <SiteHeader />
+        <HonestyBanner />
         <main>
           <div className="container">{children}</div>
         </main>
