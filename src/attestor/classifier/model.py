@@ -105,6 +105,14 @@ class SystemProfile(BaseModel):
     is_gpai: bool = False
     is_gpai_systemic: bool = False
 
+    # Digital Omnibus addition to Art. 5 (provisional, not yet in force): AI that
+    # generates non-consensual intimate imagery (NCII) / nudifiers or CSAM. The
+    # prohibition has a safe harbour — it does not bite where the system has
+    # reasonable and adequate technical safeguards to reliably prevent it. These
+    # fields are inert under the legal-text bundle, which does not reference them.
+    generates_ncii_or_csam: bool = False
+    ncii_csam_safeguards: bool = False
+
     @model_validator(mode="after")
     def _require_content_lifecycle(self) -> "SystemProfile":
         if self.generates_synthetic_content and self.content_lifecycle is None:

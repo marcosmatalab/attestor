@@ -20,15 +20,24 @@ from attestor.classifier.model import (
 )
 
 # A prohibited system is just that — it must not be placed on the market. Its
-# headline classification carries only the prohibition; any other transparency or
-# high-risk obligations are moot. This is the obligation that survives the
-# short-circuit (see ``_apply_prohibited_short_circuit``).
-_PROHIBITION_OBLIGATION_ID = "art5_prohibition"
+# headline classification carries only its prohibition obligation(s); any other
+# transparency or high-risk obligations are moot. Prohibition obligations are
+# identified by ``category: prohibition`` in the bundle catalog (see
+# ``_is_prohibition``). The frozen legal-text bundle (v2026-08) predates that
+# convention and cannot carry the metadata without changing its content hash, so
+# its single prohibition obligation is recognised via this explicit id allowlist.
+_LEGACY_PROHIBITION_IDS = frozenset({"art5_prohibition"})
+_PROHIBITION_CATEGORY = "prohibition"
 
 
 def classify(profile: SystemProfile, bundle: Bundle) -> Classification:
     """Classify ``profile`` against ``bundle`` deterministically."""
-    answers = profile.model_dump(mode="json")
+    # exclude_defaults (NOT exclude_unset) keeps the canonical fingerprint stable as
+    # the input schema grows: a field left at its default is absent from the canonical
+    # form, so adding new optional fields never perturbs the checksum of older inputs.
+    # exclude_unset would break determinism — two semantically equal profiles (one
+    # built with explicit defaults, one relying on them) would serialize differently.
+    answers = profile.model_dump(mode="json", exclude_defaults=True)
     context = _build_context(profile, answers)
 
     risk = _resolve_tier(context, bundle)
@@ -36,7 +45,7 @@ def classify(profile: SystemProfile, bundle: Bundle) -> Classification:
 
     obligations = _resolve_obligations(context, bundle)
     if risk is RiskTier.prohibited:
-        obligations = _apply_prohibited_short_circuit(obligations)
+        obligations = _apply_prohibited_short_circuit(obligations, bundle)
 
     # Stable order (by id) so the output and its checksum are reproducible
     # regardless of rule order in the bundle.
@@ -68,6 +77,12 @@ def _build_context(profile: SystemProfile, answers: dict[str, Any]) -> dict[str,
     context["fria_eligible_area"] = (
         profile.annex_iii_area is not None
         and profile.annex_iii_area is not AnnexIIIArea.critical_infrastructure
+    )
+    # Digital Omnibus (Art. 5 NCII/CSAM): prohibited unless the system has adequate
+    # safeguards (the safe harbour). Read only by the Omnibus bundle; the legal-text
+    # bundle does not reference this flag.
+    context["nudifier_prohibited"] = (
+        profile.generates_ncii_or_csam and not profile.ncii_csam_safeguards
     )
     return context
 
@@ -117,10 +132,17 @@ def _resolve_obligations(context: dict[str, Any], bundle: Bundle) -> list[Applie
     return list(emitted.values())
 
 
+def _is_prohibition(oid: str, bundle: Bundle) -> bool:
+    """A prohibition obligation is tagged ``category: prohibition`` (or is a known
+    legacy id for the frozen pre-category bundle)."""
+    entry = bundle.obligations.get(oid, {})
+    return entry.get("category") == _PROHIBITION_CATEGORY or oid in _LEGACY_PROHIBITION_IDS
+
+
 def _apply_prohibited_short_circuit(
-    obligations: list[AppliedObligation],
+    obligations: list[AppliedObligation], bundle: Bundle
 ) -> list[AppliedObligation]:
-    return [o for o in obligations if o.id == _PROHIBITION_OBLIGATION_ID]
+    return [o for o in obligations if _is_prohibition(o.id, bundle)]
 
 
 def _compute_checksum(

@@ -83,7 +83,7 @@ Configuration is read from environment variables / a local `.env` (see
 |--------|-------------|--------|
 | **F0** | Scaffold: repo, package, FastAPI `/health`, CI (ruff + pytest) | ✅ |
 | **F1** | Deterministic rule engine + bundle `v2026-08` (**legal-text dates**) + golden tests asserting **risk *and* effective dates**. Self-consistent on its own. | ✅ |
-| **F2** | **Additive:** Omnibus-scenario bundle + timeline resolution presenting **both** dates (legal text vs Omnibus provisional) + the "pending formal adoption" caveat. *No rewrite of F1 goldens.* | ⏳ |
+| **F2** | **Additive:** Omnibus-scenario bundle + timeline resolution presenting **both** dates (legal text vs Omnibus provisional) + the "pending formal adoption" caveat. *No rewrite of F1 goldens.* | ✅ |
 | **F3** | Annex IV generator + **validated citations** (a citation that doesn't resolve is rejected) + PDF export | ⏳ |
 | **F4** | C2PA signer — manifest (X.509) + RFC3161 timestamp, keys via KMS/HSM | ⏳ |
 | **F5** | C2PA verifier — reports signer + assertions + the provenance **nuance** | ⏳ |
@@ -140,6 +140,31 @@ tier — it can coexist with any risk tier.
 
 ---
 
+## Dual scenario — legal text vs Digital Omnibus (F2)
+
+F2 does **not** replace the binding legal text with the Omnibus — it shows **both**.
+`compare_timelines` classifies one profile under each bundle and reports, per
+obligation, the legal-text date vs the Omnibus date.
+
+```python
+from attestor.classifier import SystemProfile, compare_timelines
+
+cmp = compare_timelines(SystemProfile(role="provider", annex_iii_area="employment"))
+cmp.legal_text_risk            # high
+[(o.reference, str(o.legal_text_date), str(o.omnibus_date)) for o in cmp.divergences]
+# e.g. ("Art. 9", "2026-08-02", "2027-12-02") — high-risk deferred 16 months
+cmp.omnibus_status             # the provisional caveat, read from the bundle meta
+```
+
+The Omnibus bundle (`omnibus-2026`) is a **complete, self-contained, content-hashable**
+unit (not a diff), carrying only four deltas vs the legal text: Annex III high-risk
+→ `2027-12-02`, Annex I embedded → `2028-08-02`, the Art. 50(2) new/legacy marking
+split, and a **new Art. 5 prohibition** (NCII/nudifiers + CSAM, `2026-12-02`, with a
+safe harbour). The provisional caveat lives only in the bundle's `meta.status_note`
+(single source of truth) — `compare_timelines` reads it, never hardcodes it.
+
+---
+
 ## Stack
 
 | Layer | Technology |
@@ -165,10 +190,12 @@ disclaimers — knowing them is the difference between a junior and a senior tak
 - **Not legal advice.** Attestor is compliance *support and evidence*, designed
   for **human review**. Regulatory interpretation lives in a *versioned bundle*,
   not hardcoded, and anything provisional is flagged as such.
-- **The Digital Omnibus is provisional.** As of June 2026 it is a *political
-  agreement* **pending formal adoption** (Parliament + Council + publication in
-  the OJEU). The **binding legal text is still 2 Aug 2026**; Attestor surfaces
-  both the legal-text date and the Omnibus scenario, clearly labelled.
+- **The Digital Omnibus is not yet in force.** As of **23 June 2026** the European
+  Parliament has approved it (16 Jun 2026), but the Council's **formal adoption is
+  still pending** (expected 29 Jun 2026), after which it would be published in the
+  OJEU and enter into force. The **binding legal text remains Reg. (EU) 2024/1689**
+  (2 Aug 2026 timeline); Attestor surfaces both scenarios, with the Omnibus clearly
+  marked provisional (the live caveat lives in the Omnibus bundle's `meta`).
 - **C2PA proves provenance, not truth.** A valid Content Credential shows the
   manifest is intact and the signer is trusted — it does **not** assert the
   content is accurate. And the **absence** of a credential does **not** mean
