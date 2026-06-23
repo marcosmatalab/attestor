@@ -74,7 +74,7 @@ class LedgerVerification(BaseModel):
         """One line that never conflates 'untrusted TSA' with 'tampered ledger'."""
         if not self.verified:
             return (
-                "ledger TAMPERED — "
+                "ledger TAMPERED - "
                 f"integrity_ok={self.integrity_ok}, signature_ok={self.signature_ok}"
             )
         core = "ledger VERIFIED (Merkle root intact, Ed25519 signature valid)"
@@ -83,4 +83,4 @@ class LedgerVerification(BaseModel):
         if not self.timestamp_ok:
             return f"{core}; timestamp present but NOT verified ({self.detail})"
         trust = "TSA TRUSTED" if self.tsa_trusted else "TSA UNTRUSTED (not a recognised authority)"
-        return f"{core}; timestamped {self.gen_time} — {trust}"
+        return f"{core}; timestamped {self.gen_time} - {trust}"
