@@ -86,8 +86,13 @@ Configuration is read from environment variables / a local `.env` (see
 | **F2** | **Additive:** Omnibus-scenario bundle + timeline resolution presenting **both** dates (legal text vs Omnibus provisional) + the "pending formal adoption" caveat. *No rewrite of F1 goldens.* | ✅ |
 | **F3** | Annex IV generator + **validated citations** (a citation that doesn't resolve is rejected) + PDF export | ✅ |
 | **F4** | C2PA signer — manifest (X.509) + RFC3161 timestamp, keys via KMS/HSM | ✅ |
+<<<<<<< HEAD
 | **F5** | C2PA verifier — reports signer + assertions + the provenance **nuance** | ⏳ |
 | **F6** | Ledger Ed25519 + Merkle + RFC3161, **offline** verification via CLI | ✅ |
+=======
+| **F5** | C2PA verifier — reports signer + assertions + the provenance **nuance** | ✅ |
+| **F6** | Ledger Ed25519 + Merkle + RFC3161, **offline** verification via CLI | ⏳ |
+>>>>>>> origin/main
 | **F7** | Governance: ISO/IEC 42001 mapping + FRIA (Art. 27) + Art. 12 logs | ⏳ |
 | **F8** | Dashboard (Next.js) + polish + demo | ⏳ |
 
@@ -243,8 +248,53 @@ sign_asset("input.png", "signed.png", config,
   service of **Art. 50** of Reg. (EU) 2024/1689) — its presence is Attestor's choice,
   not something C2PA imposes.
 - **The dev signer is an untrusted, self-signed certificate** — **not** on any C2PA
-  trust list. A verifier will mark the signer as untrusted; that trust nuance (and
-  the verifier itself) is **F5**.
+  trust list. A verifier marks the signer as untrusted; that trust nuance (and the
+  verifier itself) is **F5**, below.
+
+---
+
+## C2PA content provenance — verifier (F5)
+
+Reads a (possibly signed) asset and reports its provenance as **two independent
+dimensions** — integrity and signer trust — that must never be conflated. Built on
+the same `c2pa-python==0.36.0`.
+
+```python
+from attestor.provenance import verify_asset
+
+report = verify_asset("signed.png")
+report.validation_state   # "Valid" — manifest intact, claim well-formed
+report.integrity_ok       # True
+report.trusted            # False — the signer is NOT on any trust list
+report.trust_reason       # "signingCredential.untrusted: ... not on any configured trust list"
+report.headline           # "integrity Valid (...); signer UNTRUSTED — ..."
+```
+
+- **Integrity** (`validation_state`) answers "is the manifest intact and the claim
+  well-formed?" — verified by the C2PA hashes and the claim signature.
+- **Trust** (`trusted` / `trust_reason`) answers, **separately**, "is the *signer*
+  recognised?" — derived from the `signingCredential.*` validation code, fail-closed
+  (untrusted unless a trust anchor is configured and the chain validates against it).
+- Verification is **deterministic**: identical bytes always produce an identical
+  report (the report keeps validation **codes** but not the per-signature URN urls).
+- An **unsigned** asset yields `has_manifest=False` without raising; **tampering** with
+  a signed asset flips `validation_state` to `"Invalid"`.
+
+### Why "Valid" is not "trusted" (honesty)
+
+- **`validation_state == "Valid"` means the manifest is intact and the claim is
+  well-formed — it does NOT mean the signer is trusted.** These are different
+  questions with different answers.
+- The proof is concrete: Attestor's dev-signed asset is `"Valid"` **and** carries a
+  `signingCredential.untrusted` entry in the validation *failure* list **at the same
+  time**. Attestor reports both, and the `headline` never states "Valid" on its own.
+- **The dev signer is untrusted** because its CA is on no C2PA trust list. A real
+  deployment signs with a certificate from a **recognised CA** and configures the
+  verifier's trust anchors — at which point the same code reports `trusted=True`.
+  Configuring the trust list is a deployment concern; F5 ships none.
+- **Absence** of a credential does not mean content is non-AI; **presence** of a valid
+  credential does not make the source trusted; and the **AI disclosure is voluntary**
+  (C2PA does not require it).
 
 ---
 
@@ -339,8 +389,9 @@ disclaimers — knowing them is the difference between a junior and a senior tak
   (2 Aug 2026 timeline); Attestor surfaces both scenarios, with the Omnibus clearly
   marked provisional (the live caveat lives in the Omnibus bundle's `meta`).
 - **C2PA proves provenance, not truth.** A valid Content Credential shows the
-  manifest is intact and the signer is trusted — it does **not** assert the
-  content is accurate. And the **absence** of a credential does **not** mean
+  manifest is intact and identifies the signer — **integrity is not trust** (a
+  `"Valid"` state says nothing about whether the signer is recognised), and neither
+  asserts the content is accurate. The **absence** of a credential does **not** mean
   content was AI-generated.
 - **The ledger is an append-only log, not a blockchain.** It gives third parties
   offline-verifiable integrity and existence proofs, but it is not distributed and has
