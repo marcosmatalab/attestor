@@ -6,6 +6,12 @@ and an Art. 12 tamper-evident audit-log capability anchored in the F6 ledger. No
 them is an audit, certification, completed assessment, or statement of conformity.
 """
 
+from attestor.governance.audit_log import (
+    Art12Event,
+    Art12EventType,
+    Art12Log,
+    verify_log,
+)
 from attestor.governance.fria import FriaScaffold, FriaSection, generate_fria
 from attestor.governance.iso42001 import (
     CrosswalkEntry,
@@ -15,6 +21,9 @@ from attestor.governance.iso42001 import (
 )
 
 __all__ = [
+    "Art12Event",
+    "Art12EventType",
+    "Art12Log",
     "CrosswalkEntry",
     "FriaScaffold",
     "FriaSection",
@@ -22,4 +31,5 @@ __all__ = [
     "Iso42001Reference",
     "derive_crosswalk",
     "generate_fria",
+    "verify_log",
 ]
