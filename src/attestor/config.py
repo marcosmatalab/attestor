@@ -25,5 +25,11 @@ class Settings(BaseSettings):
     c2pa_private_key_path: str | None = None
     rfc3161_tsa_url: str | None = None
 
+    # Cryptographic ledger (F6). Path to the Ed25519 private key that signs Merkle
+    # roots; never hardcoded or committed — the public key is published instead, and
+    # offline verification needs only the public key. In production the key lives in
+    # a KMS/HSM. The TSA URL above (RFC3161_TSA_URL) is reused to timestamp roots.
+    ledger_signing_key_path: str | None = None
+
 
 settings = Settings()
