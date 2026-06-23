@@ -10,6 +10,7 @@ technical content (that needs real system data; sections carry placeholders).
 from attestor.annexiv.citations import CitationError, validate_citations
 from attestor.annexiv.generator import generate_dossier
 from attestor.annexiv.model import AnnexIVDossier, Citation, DossierSection
+from attestor.annexiv.pdf import render_pdf
 
 __all__ = [
     "AnnexIVDossier",
@@ -17,5 +18,6 @@ __all__ = [
     "CitationError",
     "DossierSection",
     "generate_dossier",
+    "render_pdf",
     "validate_citations",
 ]
