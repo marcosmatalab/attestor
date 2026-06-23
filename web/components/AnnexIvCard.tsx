@@ -13,9 +13,9 @@ export function AnnexIvCard({ dossier, note }: { dossier: Dossier | null; note: 
   return (
     <Card title="Annex IV technical documentation">
       <Callout tone="note">
-        &quot;Validated&quot; means each citation <strong>resolves and traces</strong> to an
-        obligation the classifier emitted — not that it substantiates a claim. The sections are a
-        scaffold to complete.
+        &quot;Validated&quot; means each citation <strong>resolves and traces</strong>{" "}
+        to an obligation the classifier emitted — not that it substantiates a claim. The sections
+        are a scaffold to complete.
       </Callout>
       {dossier.sections.map((s) => (
         <div key={s.number} className={sx.sectionItem}>
