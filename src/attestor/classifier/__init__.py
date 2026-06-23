@@ -18,6 +18,11 @@ from attestor.classifier.model import (
     Role,
     SystemProfile,
 )
+from attestor.classifier.timeline import (
+    ObligationTimeline,
+    TimelineComparison,
+    compare_timelines,
+)
 
 __all__ = [
     "AnnexIIIArea",
@@ -26,10 +31,13 @@ __all__ = [
     "Classification",
     "ContentLifecycle",
     "DeployerType",
+    "ObligationTimeline",
     "ProhibitedPractice",
     "RiskTier",
     "Role",
     "SystemProfile",
+    "TimelineComparison",
     "classify",
+    "compare_timelines",
     "load_bundle",
 ]
