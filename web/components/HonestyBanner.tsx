@@ -1,13 +1,15 @@
+"use client";
+
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import styles from "./chrome.module.css";
 
-/** A persistent, prominent honesty notice. Never hidden by the redesign. */
+/** A persistent, prominent honesty notice. Never hidden by the redesign or i18n. */
 export function HonestyBanner() {
+  const { t } = useLocale();
   return (
     <div className={styles.banner} role="note">
       <div className="container">
-        <strong>Portfolio demonstration — not legal advice, not a compliance product.</strong>{" "}
-        Every figure, date, checksum, and verdict below comes from a deterministic engine; the UI
-        only displays it. No system is &quot;compliant&quot; or &quot;certified&quot; by this tool.
+        <strong>{t("honesty.bannerLead")}</strong> {t("honesty.bannerRest")}
       </div>
     </div>
   );
