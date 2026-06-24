@@ -1,4 +1,7 @@
+"use client";
+
 import type { Classification } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { Badge, Card, KeyValue, KV, Mono, TableWrap, type Tone } from "@/components/ui";
 import sx from "./sections.module.css";
 
@@ -10,25 +13,27 @@ const RISK_TONE: Record<string, Tone> = {
 };
 
 export function ClassificationCard({ c }: { c: Classification }) {
+  const { t } = useLocale();
   return (
-    <Card title="Classification">
+    <Card title={t("classification.title")}>
       <div className={sx.badgeRow}>
+        {/* Risk enum is engine output — rendered verbatim, never translated. */}
         <Badge tone={RISK_TONE[c.risk] ?? "neutral"}>{c.risk}</Badge>
       </div>
       <KeyValue>
-        <KV k="Bundle">
+        <KV k={t("classification.bundle")}>
           {c.bundle_version} <Mono>({c.bundle_sha256.slice(0, 16)}…)</Mono>
         </KV>
-        <KV k="Reproducible checksum">
+        <KV k={t("classification.checksum")}>
           <Mono>{c.checksum}</Mono>
         </KV>
       </KeyValue>
-      <TableWrap caption="Applicable obligations and their legal-text effective dates">
+      <TableWrap caption={t("classification.caption")}>
         <thead>
           <tr>
-            <th scope="col">Obligation</th>
-            <th scope="col">Reference</th>
-            <th scope="col">Effective (legal text)</th>
+            <th scope="col">{t("classification.thObligation")}</th>
+            <th scope="col">{t("classification.thReference")}</th>
+            <th scope="col">{t("classification.thEffective")}</th>
           </tr>
         </thead>
         <tbody>

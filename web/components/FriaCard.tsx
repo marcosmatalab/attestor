@@ -1,19 +1,28 @@
+"use client";
+
 import type { Fria } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { Callout, Card, Mono } from "@/components/ui";
 import sx from "./sections.module.css";
 
 export function FriaCard({ fria, note }: { fria: Fria | null; note: string | null }) {
+  const { t } = useLocale();
   if (!fria) {
     return (
-      <Card title="FRIA — fundamental rights impact assessment (Art. 27)">
-        <Callout tone="muted">{note ?? "Not applicable to this classification."}</Callout>
+      <Card title={t("fria.titleNotApplicable")}>
+        <Callout tone="muted">{note ?? t("fria.notApplicable")}</Callout>
       </Card>
     );
   }
   return (
-    <Card title="FRIA scaffold (Art. 27)">
+    <Card title={t("fria.titleApplicable")}>
+      {/* trigger / reference / date are engine output, interpolated verbatim. */}
       <p className={sx.meta}>
-        Trigger: {fria.trigger} · {fria.fria_reference}, effective {fria.fria_effective_date}
+        {t("fria.meta", {
+          trigger: fria.trigger,
+          reference: fria.fria_reference,
+          date: fria.fria_effective_date,
+        })}
       </p>
       <Callout tone="caveat">{fria.disclaimer}</Callout>
       <ul className={sx.citeList}>

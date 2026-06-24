@@ -16,6 +16,7 @@ import { CrosswalkCard } from "@/components/CrosswalkCard";
 import { FriaCard } from "@/components/FriaCard";
 import { QuestionnaireForm } from "@/components/QuestionnaireForm";
 import { TimelineTable } from "@/components/TimelineTable";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { Callout, Card, Skeleton } from "@/components/ui";
 import sx from "@/components/sections.module.css";
 
@@ -30,6 +31,7 @@ interface Results {
 }
 
 export default function Home() {
+  const { t } = useLocale();
   const [results, setResults] = useState<Results | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,23 +48,25 @@ export default function Home() {
       ]);
       // Annex IV and FRIA are gated by the engine; a 422 means "does not apply" — surface the
       // engine's own message rather than hiding the section.
+      // The gated note is the engine's real message (verbatim); on a non-Error fall back to
+      // null so the card shows its own translated "not applicable" instead of fixed English.
       let annexIv: Dossier | null = null;
       let annexIvNote: string | null = null;
       try {
         annexIv = await api.annexIv(profile);
       } catch (x) {
-        annexIvNote = x instanceof Error ? x.message : "Not applicable.";
+        annexIvNote = x instanceof Error ? x.message : null;
       }
       let fria: Fria | null = null;
       let friaNote: string | null = null;
       try {
         fria = await api.fria(profile);
       } catch (x) {
-        friaNote = x instanceof Error ? x.message : "Not applicable.";
+        friaNote = x instanceof Error ? x.message : null;
       }
       setResults({ classification, timeline, annexIv, annexIvNote, crosswalk, fria, friaNote });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "The request failed.");
+      setError(err instanceof Error ? err.message : t("common.requestFailed"));
     } finally {
       setLoading(false);
     }
@@ -70,11 +74,8 @@ export default function Home() {
 
   return (
     <>
-      <h1 className={sx.title}>Classify an AI system</h1>
-      <p className={sx.lead}>
-        Answer the questionnaire; the deterministic engine resolves the risk tier, the applicable
-        obligations and their effective dates, the Annex IV scaffold, and the governance artifacts.
-      </p>
+      <h1 className={sx.title}>{t("classify.title")}</h1>
+      <p className={sx.lead}>{t("classify.lead")}</p>
 
       <QuestionnaireForm onSubmit={run} busy={loading} />
 
@@ -85,19 +86,17 @@ export default function Home() {
           </Callout>
         )}
         {loading && (
-          <Card title="Working…">
+          <Card title={t("common.working")}>
             <Skeleton lines={4} />
           </Card>
         )}
         {!loading && !error && !results && (
-          <Callout tone="muted">
-            Submit the questionnaire to see the classification and its derived artifacts.
-          </Callout>
+          <Callout tone="muted">{t("classify.emptyHint")}</Callout>
         )}
         {!loading && results && (
           <>
             <ClassificationCard c={results.classification} />
-            <TimelineTable t={results.timeline} />
+            <TimelineTable timeline={results.timeline} />
             <AnnexIvCard dossier={results.annexIv} note={results.annexIvNote} />
             <CrosswalkCard crosswalk={results.crosswalk} />
             <FriaCard fria={results.fria} note={results.friaNote} />
