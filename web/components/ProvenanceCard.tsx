@@ -1,32 +1,29 @@
+"use client";
+
 import type { Provenance } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { Badge, Callout, Card, KeyValue, KV, Mono } from "@/components/ui";
 import sx from "./sections.module.css";
 
 export function ProvenanceCard({ prov }: { prov: Provenance }) {
+  const { t } = useLocale();
   return (
-    <Card title="C2PA provenance">
+    <Card title={t("provenance.title")}>
       <div className={sx.badgeRow}>
-        {/* Untrusted is reported in amber — correctly untrusted, not an error/tamper. */}
+        {/* Verdict token: engine output, kept verbatim (never translated) in every locale. */}
         <Badge tone={prov.trusted ? "ok" : "warn"}>
           {prov.trusted ? "signer trusted" : "signer untrusted"}
         </Badge>
       </div>
       <p className={sx.headline}>{prov.headline}</p>
-      <Callout tone="caveat">
-        Integrity (<strong>{prov.validation_state}</strong>) means the manifest is intact — it
-        does{" "}
-        <strong>not</strong>{" "}
-        mean the signer is trusted. The demo&apos;s dev certificate is on no C2PA trust list, so
-        the signer is reported <strong>untrusted</strong>. &quot;Valid&quot; is never shown without
-        the trust qualifier.
-      </Callout>
+      <Callout tone="caveat">{t("provenance.caveat", { state: prov.validation_state ?? "" })}</Callout>
       {prov.signer && (
         <KeyValue>
-          <KV k="Signer">
+          <KV k={t("provenance.signer")}>
             <Mono>{prov.signer.common_name}</Mono> · {prov.signer.algorithm}
           </KV>
           {prov.ai_disclosure && (
-            <KV k="AI disclosure">
+            <KV k={t("provenance.aiDisclosure")}>
               <Mono>{prov.ai_disclosure.digital_source_type ?? "—"}</Mono>
             </KV>
           )}
