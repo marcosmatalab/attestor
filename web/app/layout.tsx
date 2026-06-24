@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { HonestyBanner } from "@/components/HonestyBanner";
 import { SiteHeader } from "@/components/SiteHeader";
+import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 
 // Self-hosted (vendored) variable fonts — no network at build time, so the build is offline
 // and self-contained, consistent with the rest of the project. Licenses live in app/fonts/.
@@ -29,11 +30,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body>
-        <SiteHeader />
-        <HonestyBanner />
-        <main>
-          <div className="container">{children}</div>
-        </main>
+        <LocaleProvider>
+          <SiteHeader />
+          <HonestyBanner />
+          <main>
+            <div className="container">{children}</div>
+          </main>
+        </LocaleProvider>
       </body>
     </html>
   );
