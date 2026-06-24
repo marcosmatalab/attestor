@@ -1,24 +1,26 @@
+"use client";
+
 import type { Timeline } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { Callout, Card, Mono, TableWrap, cellDiverges } from "@/components/ui";
 
-export function TimelineTable({ t }: { t: Timeline }) {
+export function TimelineTable({ timeline }: { timeline: Timeline }) {
+  const { t } = useLocale();
+  // The Omnibus status is engine output (its provisional caveat) — interpolated verbatim.
+  const status = timeline.omnibus_status || "pending formal adoption";
   return (
-    <Card title="Dual timeline — legal text vs Digital Omnibus">
-      <Callout tone="caveat">
-        The binding legal text remains Reg. (EU) 2024/1689. The Omnibus column is provisional:{" "}
-        {t.omnibus_status || "pending formal adoption"}. Both dates are shown — never one as
-        &quot;the&quot; date.
-      </Callout>
+    <Card title={t("timeline.title")}>
+      <Callout tone="caveat">{t("timeline.caveat", { status })}</Callout>
       <TableWrap>
         <thead>
           <tr>
-            <th scope="col">Obligation</th>
-            <th scope="col">Legal text</th>
-            <th scope="col">Omnibus (provisional)</th>
+            <th scope="col">{t("timeline.thObligation")}</th>
+            <th scope="col">{t("timeline.thLegalText")}</th>
+            <th scope="col">{t("timeline.thOmnibus")}</th>
           </tr>
         </thead>
         <tbody>
-          {t.obligations.map((o) => {
+          {timeline.obligations.map((o) => {
             const diverges = o.legal_text_date !== o.omnibus_date;
             return (
               <tr key={o.id}>

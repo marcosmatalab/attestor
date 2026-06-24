@@ -1,22 +1,23 @@
+"use client";
+
 import type { Dossier } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { Callout, Card, Mono } from "@/components/ui";
 import sx from "./sections.module.css";
 
 export function AnnexIvCard({ dossier, note }: { dossier: Dossier | null; note: string | null }) {
+  const { t } = useLocale();
   if (!dossier) {
     return (
-      <Card title="Annex IV technical documentation">
-        <Callout tone="muted">{note ?? "Not applicable to this classification."}</Callout>
+      <Card title={t("annexiv.title")}>
+        {/* `note` is the engine's own gated message — rendered verbatim. */}
+        <Callout tone="muted">{note ?? t("annexiv.notApplicable")}</Callout>
       </Card>
     );
   }
   return (
-    <Card title="Annex IV technical documentation">
-      <Callout tone="note">
-        &quot;Validated&quot; means each citation <strong>resolves and traces</strong>{" "}
-        to an obligation the classifier emitted — not that it substantiates a claim. The sections
-        are a scaffold to complete.
-      </Callout>
+    <Card title={t("annexiv.title")}>
+      <Callout tone="note">{t("annexiv.validatedNote")}</Callout>
       {dossier.sections.map((s) => (
         <div key={s.number} className={sx.sectionItem}>
           <strong>
@@ -31,7 +32,7 @@ export function AnnexIvCard({ dossier, note }: { dossier: Dossier | null; note: 
               ))}
             </ul>
           ) : (
-            <div className={sx.meta}>No derived citations.</div>
+            <div className={sx.meta}>{t("annexiv.noCitations")}</div>
           )}
         </div>
       ))}

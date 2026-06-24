@@ -1,4 +1,7 @@
+"use client";
+
 import type { LedgerVerification } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { Badge, Callout, Card, KeyValue, KV, Mono } from "@/components/ui";
 import sx from "./sections.module.css";
 
@@ -11,25 +14,23 @@ export function LedgerCard({
   merkleRoot: string;
   records: number;
 }) {
+  const { t } = useLocale();
   return (
-    <Card title="Ledger (offline verification)">
+    <Card title={t("ledger.title")}>
       <div className={sx.badgeRow}>
+        {/* Verdict token: engine output, verbatim. */}
         <Badge tone={ledger.verified ? "ok" : "warn"}>
           {ledger.verified ? "verified" : "tampered"}
         </Badge>
       </div>
       <p className={sx.headline}>{ledger.headline}</p>
       <KeyValue>
-        <KV k="Merkle root">
+        <KV k={t("ledger.merkleRoot")}>
           <Mono>{merkleRoot}</Mono>
         </KV>
-        <KV k="Anchored records">{records}</KV>
+        <KV k={t("ledger.anchoredRecords")}>{records}</KV>
       </KeyValue>
-      <Callout tone="note">
-        An append-only log with cryptographic integrity, verifiable offline by a third party —{" "}
-        <strong>not a blockchain</strong> (no distribution, no consensus). The integrity and
-        signature decide the verdict; TSA trust, when present, is reported separately.
-      </Callout>
+      <Callout tone="note">{t("ledger.caveat")}</Callout>
     </Card>
   );
 }

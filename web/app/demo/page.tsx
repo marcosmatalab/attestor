@@ -4,6 +4,7 @@ import { useState } from "react";
 import { api, type DemoResult } from "@/lib/api";
 import { LedgerCard } from "@/components/LedgerCard";
 import { ProvenanceCard } from "@/components/ProvenanceCard";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { Badge, Button, Callout, Card, KeyValue, KV, Mono, Skeleton, type Tone } from "@/components/ui";
 import sx from "@/components/sections.module.css";
 
@@ -15,6 +16,7 @@ const RISK_TONE: Record<string, Tone> = {
 };
 
 export default function DemoPage() {
+  const { t } = useLocale();
   const [result, setResult] = useState<DemoResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +27,7 @@ export default function DemoPage() {
     try {
       setResult(await api.demo());
     } catch (err) {
-      setError(err instanceof Error ? err.message : "The request failed.");
+      setError(err instanceof Error ? err.message : t("common.requestFailed"));
     } finally {
       setLoading(false);
     }
@@ -33,16 +35,12 @@ export default function DemoPage() {
 
   return (
     <>
-      <h1 className={sx.title}>End-to-end demo</h1>
-      <p className={sx.lead}>
-        One example path for a high-risk <strong>provider</strong>: classify → Annex IV → sign an AI
-        output (C2PA) → verify → anchor in the ledger → verify the ledger offline. Every output is
-        produced live by the engine; signing and sealing use ephemeral dev keys generated per run.
-      </p>
+      <h1 className={sx.title}>{t("demo.title")}</h1>
+      <p className={sx.lead}>{t("demo.lead")}</p>
 
       <Card>
         <Button onClick={run} busy={loading}>
-          {loading ? "Running the pipeline…" : "Run the demo"}
+          {loading ? t("demo.running") : t("demo.run")}
         </Button>
       </Card>
 
@@ -53,24 +51,28 @@ export default function DemoPage() {
           </Callout>
         )}
         {loading && (
-          <Card title="Running the pipeline…">
+          <Card title={t("demo.running")}>
             <Skeleton lines={4} />
           </Card>
         )}
         {!loading && result && (
           <>
-            <Card title="Classification">
+            <Card title={t("demo.classification")}>
               <div className={sx.badgeRow}>
+                {/* Risk enum is engine output — verbatim. */}
                 <Badge tone={RISK_TONE[result.classification.risk] ?? "neutral"}>
                   {result.classification.risk}
                 </Badge>
               </div>
               <KeyValue>
-                <KV k="Checksum">
+                <KV k={t("demo.checksum")}>
                   <Mono>{result.classification.checksum}</Mono>
                 </KV>
-                <KV k="Annex IV">
-                  {result.annex_iv.system_name} — {result.annex_iv.sections.length} sections
+                <KV k={t("demo.annexiv")}>
+                  {t("demo.annexivSummary", {
+                    name: result.annex_iv.system_name,
+                    n: result.annex_iv.sections.length,
+                  })}
                 </KV>
               </KeyValue>
             </Card>
