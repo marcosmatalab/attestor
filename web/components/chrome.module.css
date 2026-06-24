@@ -43,6 +43,37 @@
   background: rgba(255, 255, 255, 0.12);
 }
 
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.langToggle {
+  display: inline-flex;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.langButton {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: #aab3c2;
+  background: transparent;
+  border: 0;
+  padding: 4px 9px;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+.langButton:hover {
+  color: #fff;
+}
+.langButtonActive {
+  color: #0f1729;
+  background: #fff;
+}
+
 .banner {
   background: var(--caveat-bg);
   border-bottom: 1px solid var(--caveat-border);
