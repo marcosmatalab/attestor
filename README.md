@@ -1,22 +1,34 @@
 # Attestor
 
-> **Status: portfolio demonstration.** The full engine (F1–F7) is implemented and tested —
-> deterministic classifier, Annex IV generator, C2PA sign/verify, offline-verifiable ledger,
-> and governance artifacts — with a thin Next.js dashboard (F8) over a FastAPI layer. Not
-> legal advice, not a compliance product.
+[![CI](https://github.com/marcosmatalab/attestor/actions/workflows/ci.yml/badge.svg)](https://github.com/marcosmatalab/attestor/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.12-blue)
+![Tests](https://img.shields.io/badge/tests-228%20passing-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-**Attestor is a deterministic EU AI Act compliance engine.** You register an AI
-system and Attestor (1) **classifies its risk** under the EU AI Act (prohibited /
-high / limited / minimal) and resolves **which obligations apply and from which
-date** — including the *Digital Omnibus* timeline; (2) **generates the Annex IV
-technical dossier** with citations **validated** against a versioned regulatory
-bundle (no hallucinated references); (3) **signs AI outputs with C2PA Content
-Credentials** for verifiable provenance (Art. 50); and (4) **anchors everything in
-a cryptographic ledger** (Ed25519 + Merkle + RFC3161) that a third party can
-verify **offline**.
+**A deterministic EU AI Act compliance engine: the classification decision is a rule engine, NOT an LLM, so the same input always yields the same output with a reproducible checksum — and everything is anchored in a cryptographic ledger a third party can verify offline.**
 
-The classification decision is a **rule engine, not an LLM** — same input produces
-the same output, with a checksum, reproducible for an auditor.
+![Attestor dashboard](docs/dashboard.png)
+
+> Portfolio demonstration — not legal advice, not a compliance product; every value shown is produced by the deterministic engine, not asserted by the UI.
+
+## What makes it different
+
+- **Deterministic decision, no LLM** — same input → same output, with a reproducible checksum an auditor can replicate.
+- **The ledger separates integrity from trust** — the tamper check is integrity + signature; TSA trust is a separate, fail-closed axis that never decides whether tampering occurred.
+- **Validated citations** — a regulatory reference that does not resolve is rejected; zero hallucinated references.
+- **Additive regulatory evolution** — new scenarios (the Digital Omnibus) are added without rewriting the existing golden tests, so reproducibility is preserved.
+
+---
+
+## What it does
+
+You register an AI system and Attestor (1) **classifies its risk** under the EU AI Act
+(prohibited / high / limited / minimal) and resolves **which obligations apply and from
+which date** — including the *Digital Omnibus* timeline; (2) **generates the Annex IV
+technical dossier** with citations **validated** against a versioned regulatory bundle (no
+hallucinated references); (3) **signs AI outputs with C2PA Content Credentials** for
+verifiable provenance (Art. 50); and (4) **anchors everything in a cryptographic ledger**
+(Ed25519 + Merkle + RFC3161) that a third party can verify **offline**.
 
 ---
 
@@ -55,16 +67,6 @@ flowchart TD
     api --> web
     ledger ==> auditor
 ```
-
----
-
-## Dashboard
-
-![Attestor dashboard](docs/dashboard.png)
-
-> The end-to-end demo page, captured live from the running app — every value (risk, checksum,
-> the C2PA verdict with the signer reported **untrusted**, and the ledger **verified** offline) is
-> rendered verbatim from the engine. Reproduce it via [Run it locally](#run-it-locally).
 
 ---
 
