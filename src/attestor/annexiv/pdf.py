@@ -58,9 +58,7 @@ def _build(dossier: AnnexIVDossier) -> bytes:
     if dossier.status_note:
         # Neutral label: the note says whether the timeline binds or is provisional,
         # and the dossier must not prejudge which.
-        flow.append(
-            Paragraph(f"<b>Regulatory status:</b> {dossier.status_note}", guidance_style)
-        )
+        flow.append(Paragraph(f"<b>Regulatory status:</b> {dossier.status_note}", guidance_style))
         flow.append(Spacer(1, 4 * mm))
 
     if dossier.legal_basis is not None:
