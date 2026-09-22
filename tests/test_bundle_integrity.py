@@ -5,38 +5,47 @@ import pytest
 from attestor.classifier.bundle import Bundle, load_bundle
 
 
-def test_default_bundle_loads_and_is_versioned() -> None:
+def test_default_bundle_is_the_law_in_force() -> None:
+    """A compliance engine whose default applies a superseded calendar is wrong."""
     bundle = load_bundle()
+    assert bundle.version == "reg-2026-1744"
+    assert bundle.content["meta"]["scenario"] == "in-force"
+    assert bundle.content["meta"]["status"] == "in-force"
+    assert bundle.content["meta"]["in_force_since"] == "2026-07-27"
+
+
+def test_legal_text_bundle_loads_and_is_versioned() -> None:
+    bundle = load_bundle("v2026-08")
     assert bundle.version == "v2026-08"
     assert bundle.content["meta"]["scenario"] == "legal-text"
 
 
 def test_bundle_sha256_is_hex_digest() -> None:
-    bundle = load_bundle()
+    bundle = load_bundle("v2026-08")
     assert len(bundle.sha256) == 64
     assert all(c in "0123456789abcdef" for c in bundle.sha256)
 
 
 def test_bundle_sha256_is_deterministic() -> None:
-    assert load_bundle().sha256 == load_bundle().sha256
+    assert load_bundle("v2026-08").sha256 == load_bundle("v2026-08").sha256
 
 
 def test_every_obligation_rule_targets_a_known_obligation() -> None:
-    bundle = load_bundle()
+    bundle = load_bundle("v2026-08")
     for rule in bundle.obligation_rules:
         assert rule["obligation"] in bundle.obligations
 
 
 def test_every_obligation_reference_resolves_in_article_index() -> None:
     # This is the invariant the F3 citation validator will depend on.
-    bundle = load_bundle()
+    bundle = load_bundle("v2026-08")
     for oid, meta in bundle.obligations.items():
         assert meta["reference"] in bundle.articles, oid
 
 
 def test_no_omnibus_date_leaked_into_legal_text_bundle() -> None:
     # The 2026-12-02 legacy-marking transition is an Omnibus delta (F2), not legal text.
-    bundle = load_bundle()
+    bundle = load_bundle("v2026-08")
     dates = {rule["effective_date"] for rule in bundle.obligation_rules}
     assert "2026-12-02" not in dates
 

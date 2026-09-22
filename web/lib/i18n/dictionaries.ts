@@ -65,12 +65,12 @@ export const en = {
     thEffective: "Effective (legal text)",
   },
   timeline: {
-    title: "Dual timeline — legal text vs Digital Omnibus",
+    title: "Dual timeline — as enacted vs as amended",
     caveat:
-      'The binding legal text remains Reg. (EU) 2024/1689. The Omnibus column is provisional: {status}. Both dates are shown — never one as "the" date.',
+      'The right-hand column is the law in force: Reg. (EU) 2026/1744 (Digital Omnibus on AI), binding since 27 July 2026. {status} The left-hand column is Reg. (EU) 2024/1689 as originally enacted. Both dates are shown — never one as "the" date.',
     thObligation: "Obligation",
-    thLegalText: "Legal text",
-    thOmnibus: "Omnibus (provisional)",
+    thLegalText: "As enacted (2024/1689)",
+    thOmnibus: "In force (2026/1744)",
   },
   annexiv: {
     title: "Annex IV technical documentation",
@@ -176,12 +176,12 @@ export const es: typeof en = {
     thEffective: "Exigible (texto legal)",
   },
   timeline: {
-    title: "Calendario dual — texto legal vs Digital Omnibus",
+    title: "Calendario dual — texto original vs texto vigente",
     caveat:
-      'El texto legal vinculante sigue siendo el Reg. (UE) 2024/1689. La columna Omnibus es provisional: {status}. Se muestran ambas fechas — nunca una como "la" fecha.',
+      'La columna de la derecha es el derecho vigente: Reg. (UE) 2026/1744 (Omnibus Digital sobre IA), vinculante desde el 27 de julio de 2026. {status} La columna de la izquierda es el Reg. (UE) 2024/1689 en su texto original. Se muestran ambas fechas — nunca una como "la" fecha.',
     thObligation: "Obligación",
-    thLegalText: "Texto legal",
-    thOmnibus: "Omnibus (provisional)",
+    thLegalText: "Texto original (2024/1689)",
+    thOmnibus: "Vigente (2026/1744)",
   },
   annexiv: {
     title: "Documentación técnica del Anexo IV",

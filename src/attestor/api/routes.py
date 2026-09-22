@@ -23,8 +23,10 @@ from pydantic import BaseModel
 from attestor.annexiv import generate_dossier, render_pdf
 from attestor.canonical import sha256_hex
 from attestor.classifier import (
+    AnnexIIIArea,
     Bundle,
     Classification,
+    Role,
     SystemProfile,
     classify,
     compare_timelines,
@@ -42,7 +44,9 @@ from attestor.provenance import (
 
 router = APIRouter(prefix="/api", tags=["attestor"])
 
-LEGAL_TEXT_BUNDLE = "v2026-08"
+# The bundle the API serves by default: the law in force, not the text as first
+# enacted. The name is kept so nothing downstream breaks.
+LEGAL_TEXT_BUNDLE = "reg-2026-1744"
 
 
 def _bundle() -> Bundle:
@@ -148,7 +152,7 @@ def demo_run_endpoint() -> dict[str, Any]:
     so the C2PA signer is honestly untrusted and the ledger still verifies offline.
     """
     bundle = _bundle()
-    profile = SystemProfile(role="provider", annex_iii_area="employment")
+    profile = SystemProfile(role=Role.provider, annex_iii_area=AnnexIIIArea.employment)
     classification = classify(profile, bundle)
     dossier = generate_dossier(profile, classification, bundle, system_name="Demo hiring system")
 

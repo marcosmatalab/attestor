@@ -20,7 +20,7 @@ def test_default_valued_fields_are_excluded_from_the_canonical_form() -> None:
 
 def test_classification_still_resolves_with_trimmed_context() -> None:
     # exclude_defaults trims the context; predicate matching must still hold.
-    bundle = load_bundle()
+    bundle = load_bundle("v2026-08")
     result = classify(
         SystemProfile(role=Role.provider, annex_iii_area=AnnexIIIArea.employment), bundle
     )
@@ -32,7 +32,7 @@ def test_explicit_default_omnibus_fields_do_not_change_checksum() -> None:
     # Guards exclude_defaults vs exclude_unset: a profile with the new Omnibus
     # fields set EXPLICITLY to False must fingerprint identically to one relying on
     # their defaults. Under exclude_unset these would diverge and break determinism.
-    bundle = load_bundle()
+    bundle = load_bundle("v2026-08")
     defaulted = classify(
         SystemProfile(role=Role.provider, annex_iii_area=AnnexIIIArea.employment), bundle
     )

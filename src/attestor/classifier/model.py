@@ -105,7 +105,8 @@ class SystemProfile(BaseModel):
     is_gpai: bool = False
     is_gpai_systemic: bool = False
 
-    # Digital Omnibus addition to Art. 5 (provisional, not yet in force): AI that
+    # Art. 5 addition made by Reg. (EU) 2026/1744 (Digital Omnibus on AI), in force
+    # since 2026-07-27: AI that
     # generates non-consensual intimate imagery (NCII) / nudifiers or CSAM. The
     # prohibition has a safe harbour — it does not bite where the system has
     # reasonable and adequate technical safeguards to reliably prevent it. These
