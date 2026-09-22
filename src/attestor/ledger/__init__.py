@@ -12,6 +12,7 @@ committed, verifiable instance of exactly that.
 
 from attestor.ledger.keys import (
     generate_ledger_key,
+    ledger_key_from_settings,
     load_ledger_key,
     public_key_from_hex,
     public_key_hex,
@@ -51,6 +52,7 @@ __all__ = [
     "attach_timestamp",
     "build_timestamp_request",
     "generate_ledger_key",
+    "ledger_key_from_settings",
     "load_ledger",
     "load_ledger_key",
     "merkle_root",

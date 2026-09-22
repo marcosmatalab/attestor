@@ -36,14 +36,14 @@ from attestor.classifier import (
     load_bundle,
 )
 from attestor.governance import assess_fria, log_retention_duties, map_to_iso42001
-from attestor.ledger import Ledger, generate_ledger_key, save_ledger, verify_ledger
+from attestor.ledger import Ledger, ledger_key_from_settings, save_ledger, verify_ledger
 from attestor.ledger.model import LedgerRecord, LedgerVerification, SignedRoot
 from attestor.provenance import (
     ProvenanceReport,
     build_manifest,
     build_signer,
-    generate_dev_signing_material,
     sign_bytes,
+    signing_material_from_settings,
     synthetic_png,
     verify_bytes,
 )
@@ -134,7 +134,7 @@ def run_demo(bundle_version: str | None = None) -> dict[str, Any]:
 
 def _sign_and_verify(classification: Classification) -> tuple[bytes, ProvenanceReport]:
     manifest = build_manifest(classification, title=DEMO_ASSET_TITLE, version=__version__)
-    signer = build_signer(generate_dev_signing_material())
+    signer = build_signer(signing_material_from_settings())
     signed_asset = sign_bytes(manifest, synthetic_png(), signer)
     return signed_asset, verify_bytes(signed_asset)
 
@@ -164,7 +164,7 @@ def _anchor(
         payload_sha256=asset_sha256,
         recorded_at=RECORDED_AT,
     )
-    signed_root = ledger.seal(generate_ledger_key(), sealed_at=RECORDED_AT)
+    signed_root = ledger.seal(ledger_key_from_settings(), sealed_at=RECORDED_AT)
     return ledger.records, signed_root, verify_ledger(ledger.records, signed_root)
 
 
