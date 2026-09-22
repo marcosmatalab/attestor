@@ -1,0 +1,70 @@
+# Anchored digests. Literal values, checked by tests/test_checksum_anchors.py.
+#
+# WHY THIS FILE EXISTS. The golden vectors pin risk tiers and effective dates, and
+# the determinism tests compare a run against itself - so a change to the canonical
+# form would have sailed through the whole suite while the README promised auditors
+# a reproducible checksum. Nothing anchored an actual digest. This does.
+#
+# It is deliberately annoying: any legitimate change to canonicalisation or to a
+# bundle forces someone to retype these by hand. That decision is currently taken
+# by accident, and it should not be.
+#
+# Regenerate (only when the change is intended):
+#   python scripts/write_checksum_anchors.py
+
+bundles:
+  v2026-08: "7e77bc0715a2b5836f83e6c50e69ab312ca8b7167c1c747674d8143a3312d49d"
+  omnibus-2026: "a52cb5e185c01fa0cf62b967a659d5cc8e7769b176e25b3eb2e9647299462c51"
+  reg-2026-1744: "6a8cba0a08bcf03868224155c0af24fda24973a3aade595be0e1f7ae563f2c1a"
+
+# Each profile is classified under all three scenario bundles. Same questionnaire,
+# three timelines, three distinct digests.
+classifications:
+  provider_annex_iii_employment:
+    input: { role: provider, annex_iii_area: employment }
+    expected:
+      v2026-08: "15815cd8f577dea7cc09696acc9a3e96870664573ea428e7c81bb8b06a84bd17"
+      omnibus-2026: "3bc20cb8a68d47c16d36c91a400acd2e0b03eb2020f2983a14bdfc7a56fe24f0"
+      reg-2026-1744: "d821e3e0b95d4edda4416916f2a5b02ef0296f34704a0010ee0222b3a9e0ee48"
+  provider_annex_i_embedded:
+    input: { role: provider, annex_i_embedded: true }
+    expected:
+      v2026-08: "fb14254767d3140bf4e283c5a0da3046013106475ff9a37e4444423169f7b696"
+      omnibus-2026: "2c68ab1b8cb6cad8aec9ed740ef9ba96e1213e0c21d901be1e7b03da7990b74f"
+      reg-2026-1744: "c2e39fe10f01e940466bc3fed33ff907764ff70a03819df9dc18ce3d3f327416"
+  deployer_public_body_employment:
+    input: { role: deployer, annex_iii_area: employment, deployer_type: public_body }
+    expected:
+      v2026-08: "da42d3cb8723005638fc430e8b0c13f36ed390e48d1fc63a07ea075afe2bb754"
+      omnibus-2026: "a3cc87ff4829ebbcbec63a3dc074948db7e57a73b25394c1eae808451d0bc546"
+      reg-2026-1744: "63c63839e0043f68c6e3297dd7b00709d7670dbfc8eac39a0d1bec46f120ff94"
+  deployer_other_employment:
+    input: { role: deployer, annex_iii_area: employment, deployer_type: other }
+    expected:
+      v2026-08: "c75fa5ab5011fb888152fcf383454f4d0880cb79b6c9a885c5037fc74e86a267"
+      omnibus-2026: "a218653fc47f7280ba53c6d981f922fed2bfe7fbeb944148b80996322b86e59c"
+      reg-2026-1744: "e3dc074b7e96d6d74f9d5e7111fdf1f119af08c372c87a186206028622b4aaa2"
+  provider_chatbot_only:
+    input: { role: provider, interacts_with_humans: true }
+    expected:
+      v2026-08: "f7e09ad976bf9230044e06a15350d4e58b3204345eb306aaf827c576b6b190c7"
+      omnibus-2026: "77b14589a18451bbbd8043b39417960bb64d24fccf28afa811711df312e17a6c"
+      reg-2026-1744: "6e543d955afc7b8bb6ad663d77dba7f3d9214e132cb5df368cc6e64b4a163bc8"
+  provider_legacy_synthetic_content:
+    input: { role: provider, generates_synthetic_content: true, content_lifecycle: legacy }
+    expected:
+      v2026-08: "4f115908c0e68813d60f53ea77354f5537c49dc0f95d4e21c5ecbdd271fb30e7"
+      omnibus-2026: "4dc7c7a90622c36a8731f115098eec24e92a79478b2900900949d50266ee44f8"
+      reg-2026-1744: "9db71d4bab77be86f40bae0c2b1cc7585382a71047adaac2a16e50b2312b91c8"
+  provider_gpai_systemic:
+    input: { role: provider, is_gpai: true, is_gpai_systemic: true }
+    expected:
+      v2026-08: "43a25c3ddba2a394c50ece9ca5540800da1be4d33b1912dd07b7a94a768b19f6"
+      omnibus-2026: "04e99ee68e2986fec818a86d438bd3a671c9ba5ad0fa43374146d64c024e89db"
+      reg-2026-1744: "97c7420e697419212856b92e4bc2eba474f3de7069a91ce7d872216381bd1170"
+  provider_ncii_no_safeguards:
+    input: { role: provider, generates_ncii_or_csam: true }
+    expected:
+      v2026-08: "2ce69cebc1b6558c043471aa1f9025b8ca1440363af6a55f8edd935f547eacbb"
+      omnibus-2026: "7fd6fdc17bf2dd8bb5c7297edfe5556486250a522db16ad781958af1169e9ce9"
+      reg-2026-1744: "c61de9ef5e233179c9b854fff5707e5fa0f75cd2368fa49a6942c42e13cbfab1"
