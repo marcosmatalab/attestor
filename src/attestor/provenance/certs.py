@@ -14,11 +14,14 @@ certificate needs an extended key usage of ``emailProtection`` or
 
 import datetime
 from dataclasses import dataclass
+from pathlib import Path
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
+
+from attestor.config import settings
 
 _NOT_BEFORE = datetime.datetime(2026, 1, 1, tzinfo=datetime.UTC)
 _NOT_AFTER = datetime.datetime(2036, 1, 1, tzinfo=datetime.UTC)
@@ -122,3 +125,28 @@ def generate_dev_signing_material() -> SigningMaterial:
         certificate_chain_pem=leaf_pem + root_pem,
         root_pem=root_pem,
     )
+
+
+def load_signing_material(cert_path: str | Path, key_path: str | Path) -> SigningMaterial:
+    """Load a PEM certificate chain and its EC private key from disk."""
+    chain = Path(cert_path).read_text(encoding="ascii")
+    key = serialization.load_pem_private_key(Path(key_path).read_bytes(), password=None)
+    if not isinstance(key, ec.EllipticCurvePrivateKey):
+        raise ValueError(
+            f"{key_path} is not an EC private key: {type(key).__name__}. "
+            "C2PA ES256 signing needs a P-256 key."
+        )
+    return SigningMaterial(private_key=key, certificate_chain_pem=chain, root_pem="")
+
+
+def signing_material_from_settings() -> SigningMaterial:
+    """Use the configured PEM material if both paths are set, else mint dev material.
+
+    This is the seam. Replacing the loader with one that talks to a KMS is the whole
+    change a KMS integration would need; no such backend is implemented here.
+    """
+    cert_path = settings.c2pa_cert_path
+    key_path = settings.c2pa_private_key_path
+    if cert_path and key_path:
+        return load_signing_material(cert_path, key_path)
+    return generate_dev_signing_material()

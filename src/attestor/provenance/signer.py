@@ -17,6 +17,7 @@ from c2pa import Builder, C2paSigningAlg, Signer
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 
+from attestor.config import settings
 from attestor.provenance.certs import SigningMaterial
 
 
@@ -24,8 +25,10 @@ def build_signer(material: SigningMaterial, *, tsa_url: str | None = None) -> Si
     """Build a C2PA signer that signs through a callback over ``material``.
 
     ``tsa_url`` is passed straight to the C2PA SDK, which fetches an RFC3161 token
-    at signing time. It is ``None`` by default so the default path stays offline.
+    at signing time. It defaults to ``RFC3161_TSA_URL`` from the environment, and
+    when that is unset no timestamp is requested, so the default path stays offline.
     """
+    tsa_url = tsa_url if tsa_url is not None else settings.rfc3161_tsa_url
     private_key = material.private_key
 
     def sign_callback(data: bytes) -> bytes:

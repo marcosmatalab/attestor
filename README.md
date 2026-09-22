@@ -86,7 +86,7 @@ Configuration is read from environment variables / a local `.env` (see
 | **F1** | Deterministic rule engine + bundle `v2026-08` (**legal-text dates**) + golden tests asserting **risk *and* effective dates**. Self-consistent on its own. | ✅ |
 | **F2** | **Additive:** scenario bundles + timeline resolution presenting **both** dates (as enacted vs as amended), with the status caveat read from the bundle `meta`. *No rewrite of F1 goldens — not when the Omnibus was a proposal, and not when it became law.* | ✅ |
 | **F3** | Annex IV generator + **validated citations** (a citation that doesn't resolve is rejected) + PDF export | ✅ |
-| **F4** | C2PA signer — manifest (X.509) + RFC3161 timestamp, keys via KMS/HSM | ✅ |
+| **F4** | C2PA signer: X.509 manifest + optional RFC3161 timestamp. Keys are config-driven and sign inside a `Signer.from_callback` seam, the same interface a KMS/HSM signer plugs into. No KMS backend is implemented. | ✅ |
 | **F5** | C2PA verifier — reports signer + assertions + the provenance **nuance** | ✅ |
 | **F6** | Ledger Ed25519 + Merkle + RFC3161, **offline** verification via CLI | ✅ |
 | **F7** | Governance: ISO/IEC 42001 mapping + FRIA (Art. 27) + Art. 12 logs | ✅ |
@@ -107,13 +107,13 @@ output, with a content-addressed `checksum` an auditor can reproduce.
 ```python
 from attestor.classifier import SystemProfile, classify, load_bundle
 
-bundle = load_bundle("v2026-08")            # legal-text scenario
+bundle = load_bundle("v2026-08")  # legal-text scenario
 profile = SystemProfile(role="provider", annex_iii_area="employment")
 result = classify(profile, bundle)
 
-result.risk                                  # RiskTier.high
-result.effective_dates["art9_risk_management"]   # "2026-08-02"
-result.checksum                              # sha256 over canonical(input + bundle + result)
+result.risk  # RiskTier.high
+result.effective_dates["art9_risk_management"]  # "2026-08-02"
+result.checksum  # sha256 over canonical(input + bundle + result)
 ```
 
 **How it works.** A bundle holds (1) `risk_tier_rules` evaluated in order —
@@ -152,10 +152,10 @@ the Regulation as it binds today.
 from attestor.classifier import SystemProfile, compare_timelines
 
 cmp = compare_timelines(SystemProfile(role="provider", annex_iii_area="employment"))
-cmp.legal_text_risk            # high
+cmp.legal_text_risk  # high
 [(o.reference, str(o.legal_text_date), str(o.omnibus_date)) for o in cmp.divergences]
 # e.g. ("Art. 9", "2026-08-02", "2027-12-02") — high-risk deferred 16 months
-cmp.omnibus_status             # the status caveat, read from the binding bundle meta
+cmp.omnibus_status  # the status caveat, read from the binding bundle meta
 ```
 
 Each scenario bundle is a **complete, self-contained, content-hashable** unit (not a
@@ -188,8 +188,8 @@ bundle = load_bundle("v2026-08")
 profile = SystemProfile(role="provider", annex_iii_area="employment")
 dossier = generate_dossier(profile, classify(profile, bundle), bundle)
 
-validate_citations(dossier, classify(profile, bundle), bundle)   # fail-closed, or raises
-pdf_bytes = render_pdf(dossier)                                   # deterministic (reportlab)
+validate_citations(dossier, classify(profile, bundle), bundle)  # fail-closed, or raises
+pdf_bytes = render_pdf(dossier)  # deterministic (reportlab)
 ```
 
 - **Provider-only, high-risk only.** Annex IV is a provider obligation (Art. 11);
@@ -222,12 +222,12 @@ pdf_bytes = render_pdf(dossier)                                   # deterministi
 | Layer | Technology |
 |-------|------------|
 | Classifier | Python deterministic rule engine (no LLM in the decision), versioned YAML/JSON bundle |
-| Annex IV | LLM **for drafting only**, with citations validated against the bundle |
+| Annex IV | Deterministic template derived from the classification, no LLM. Citations validated against the bundle |
 | C2PA | `c2pa-python` (`Builder` to sign, `Reader` to verify) |
-| C2PA keys | KMS/HSM (AWS KMS) in production; local file in dev |
-| Timestamp | RFC3161 TSA (AdES "T" level) |
+| C2PA keys | Local PEM chain + key, read from config. `Signer.from_callback` is the seam a KMS/HSM signer would plug into; no KMS backend ships here |
+| Timestamp | RFC3161 codec (request + token parsing). The token is verified to *bind* to the signed root; TSA chain validation is out of scope |
 | Ledger | Ed25519 (`cryptography`) + custom Merkle tree + RFC3161 |
-| Backend | FastAPI + PostgreSQL (multi-tenant RLS) |
+| Backend | FastAPI. No database: nothing in the engine persists state |
 | Frontend | Next.js (registration, compliance dashboard, verifier) |
 | PDF | Annex IV dossier + evidence export |
 

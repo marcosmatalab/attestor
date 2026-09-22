@@ -16,6 +16,8 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import (
     Ed25519PublicKey,
 )
 
+from attestor.config import settings
+
 
 def generate_ledger_key() -> Ed25519PrivateKey:
     """Generate a fresh Ed25519 private key."""
@@ -64,3 +66,17 @@ def public_key_from_hex(value: str) -> Ed25519PublicKey:
     if len(raw) != 32:
         raise ValueError(f"Ed25519 public key must be 32 bytes, got {len(raw)}")
     return Ed25519PublicKey.from_public_bytes(raw)
+
+
+def ledger_key_from_settings() -> Ed25519PrivateKey:
+    """Load ``LEDGER_SIGNING_KEY_PATH`` if it is configured, else generate one.
+
+    An ephemeral key still produces a ledger anyone can verify - the public key
+    travels inside the sealed root. What a configured key buys is a *stable*
+    identity across runs, which is what you want in a deployment and explicitly not
+    what the demo wants (it commits no private key).
+    """
+    configured = settings.ledger_signing_key_path
+    if configured:
+        return load_ledger_key(configured)
+    return generate_ledger_key()
