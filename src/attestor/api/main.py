@@ -1,19 +1,22 @@
 """FastAPI application entrypoint.
 
-F0 scaffold: exposes only a health probe. No business logic yet — the classifier,
-Annex IV generator, C2PA provenance, and ledger arrive in later phases.
+Wires the health probe and the ``/api`` router. All compliance logic lives in the
+engine packages; this module only composes them into an app.
 """
 
 from fastapi import FastAPI
 
 from attestor import __version__
+from attestor.api.routes import router
 from attestor.config import settings
 
 app = FastAPI(
     title="Attestor",
     version=__version__,
-    description="Deterministic EU AI Act compliance engine (pre-alpha scaffold).",
+    description="Deterministic EU AI Act compliance engine.",
 )
+
+app.include_router(router)
 
 
 @app.get("/health")

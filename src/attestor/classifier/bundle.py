@@ -76,6 +76,16 @@ class Bundle:
                 raise ValueError(f"obligation {oid!r} has unresolved reference: {ref!r}")
 
 
+def available_versions() -> list[str]:
+    """Every bundle version packaged with this build, sorted for stable output."""
+    rules = importlib.resources.files(_CLASSIFIER_PACKAGE).joinpath("rules")
+    return sorted(
+        entry.name.removesuffix(".yaml")
+        for entry in rules.iterdir()
+        if entry.name.endswith(".yaml")
+    )
+
+
 def load_bundle(version: str = DEFAULT_VERSION) -> Bundle:
     """Load and validate the bundle for ``version`` from packaged resources."""
     resource = (

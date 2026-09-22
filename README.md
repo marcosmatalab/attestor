@@ -1,6 +1,7 @@
 # Attestor
 
-> **Status: `pre-alpha` · 🚧 under construction.** F0 (scaffold) only. No business logic yet.
+> **Status: `pre-alpha`.** F0–F7 complete: deterministic classifier, Annex IV dossier,
+> C2PA provenance, governance views, and an offline-verifiable ledger. F8 (dashboard) is next.
 
 **Attestor is a deterministic EU AI Act compliance engine.** You register an AI
 system and Attestor (1) **classifies its risk** under the EU AI Act (prohibited /
@@ -85,10 +86,10 @@ Configuration is read from environment variables / a local `.env` (see
 | **F1** | Deterministic rule engine + bundle `v2026-08` (**legal-text dates**) + golden tests asserting **risk *and* effective dates**. Self-consistent on its own. | ✅ |
 | **F2** | **Additive:** Omnibus-scenario bundle + timeline resolution presenting **both** dates (legal text vs Omnibus provisional) + the "pending formal adoption" caveat. *No rewrite of F1 goldens.* | ✅ |
 | **F3** | Annex IV generator + **validated citations** (a citation that doesn't resolve is rejected) + PDF export | ✅ |
-| **F4** | C2PA signer — manifest (X.509) + RFC3161 timestamp, keys via KMS/HSM | ⏳ |
-| **F5** | C2PA verifier — reports signer + assertions + the provenance **nuance** | ⏳ |
-| **F6** | Ledger Ed25519 + Merkle + RFC3161, **offline** verification via CLI | ⏳ |
-| **F7** | Governance: ISO/IEC 42001 mapping + FRIA (Art. 27) + Art. 12 logs | ⏳ |
+| **F4** | C2PA signer — manifest (X.509) + RFC3161 timestamp, keys via KMS/HSM | ✅ |
+| **F5** | C2PA verifier — reports signer + assertions + the provenance **nuance** | ✅ |
+| **F6** | Ledger Ed25519 + Merkle + RFC3161, **offline** verification via CLI | ✅ |
+| **F7** | Governance: ISO/IEC 42001 mapping + FRIA (Art. 27) + Art. 12 logs | ✅ |
 | **F8** | Dashboard (Next.js) + polish + demo | ⏳ |
 
 > **Bundle schema note (F1 design constraint):** effective dates are stored
