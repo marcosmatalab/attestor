@@ -123,7 +123,7 @@ Configuration is read from environment variables / a local `.env` (see
 | **F1** | Deterministic rule engine + bundle `v2026-08` (**legal-text dates**) + golden tests asserting **risk *and* effective dates**. Self-consistent on its own. | ✅ |
 | **F2** | **Additive:** scenario bundles + timeline resolution presenting **both** dates (as enacted vs as amended), with the status caveat read from the bundle `meta`. *No rewrite of F1 goldens — not when the Omnibus was a proposal, and not when it became law.* | ✅ |
 | **F3** | Annex IV generator + **validated citations** (a citation that doesn't resolve is rejected) + PDF export | ✅ |
-| **F4** | C2PA signer — manifest (X.509) + RFC3161 timestamp, keys via KMS/HSM | ✅ |
+| **F4** | C2PA signer: X.509 manifest + optional RFC3161 timestamp. Keys are config-driven and sign inside a `Signer.from_callback` seam, the same interface a KMS/HSM signer plugs into. No KMS backend is implemented. | ✅ |
 | **F5** | C2PA verifier — reports signer + assertions + the provenance **nuance** | ✅ |
 | **F6** | Ledger Ed25519 + Merkle + RFC3161, **offline** verification via CLI | ✅ |
 | **F7** | Governance: ISO/IEC 42001 mapping + FRIA (Art. 27) + Art. 12 logs | ✅ |
@@ -144,13 +144,13 @@ output, with a content-addressed `checksum` an auditor can reproduce.
 ```python
 from attestor.classifier import SystemProfile, classify, load_bundle
 
-bundle = load_bundle("v2026-08")            # legal-text scenario
+bundle = load_bundle("v2026-08")  # legal-text scenario
 profile = SystemProfile(role="provider", annex_iii_area="employment")
 result = classify(profile, bundle)
 
-result.risk                                  # RiskTier.high
-result.effective_dates["art9_risk_management"]   # "2026-08-02"
-result.checksum                              # sha256 over canonical(input + bundle + result)
+result.risk  # RiskTier.high
+result.effective_dates["art9_risk_management"]  # "2026-08-02"
+result.checksum  # sha256 over canonical(input + bundle + result)
 ```
 
 **How it works.** A bundle holds (1) `risk_tier_rules` evaluated in order —
@@ -189,10 +189,10 @@ the Regulation as it binds today.
 from attestor.classifier import SystemProfile, compare_timelines
 
 cmp = compare_timelines(SystemProfile(role="provider", annex_iii_area="employment"))
-cmp.legal_text_risk            # high
+cmp.legal_text_risk  # high
 [(o.reference, str(o.legal_text_date), str(o.omnibus_date)) for o in cmp.divergences]
 # e.g. ("Art. 9", "2026-08-02", "2027-12-02") — high-risk deferred 16 months
-cmp.omnibus_status             # the status caveat, read from the binding bundle meta
+cmp.omnibus_status  # the status caveat, read from the binding bundle meta
 ```
 
 Each scenario bundle is a **complete, self-contained, content-hashable** unit (not a
@@ -226,8 +226,8 @@ bundle = load_bundle("v2026-08")
 profile = SystemProfile(role="provider", annex_iii_area="employment")
 dossier = generate_dossier(profile, classify(profile, bundle), bundle)
 
-validate_citations(dossier, classify(profile, bundle), bundle)   # fail-closed, or raises
-pdf_bytes = render_pdf(dossier)                                   # deterministic (reportlab)
+validate_citations(dossier, classify(profile, bundle), bundle)  # fail-closed, or raises
+pdf_bytes = render_pdf(dossier)  # deterministic (reportlab)
 ```
 
 - **Provider-only, high-risk only.** Annex IV is a provider obligation (Art. 11);
@@ -264,15 +264,19 @@ source type) and an Attestor disclosure assertion. Built on `c2pa-python==0.36.0
 ```python
 from attestor.provenance import ProvenanceMetadata, SignerConfig, generate_dev_cert, sign_asset
 
-generate_dev_cert("dev_chain.pem", "dev_key.pem")          # dev only — never commit
+generate_dev_cert("dev_chain.pem", "dev_key.pem")  # dev only — never commit
 config = SignerConfig(cert_path="dev_chain.pem", private_key_path="dev_key.pem")
-sign_asset("input.png", "signed.png", config,
-           ProvenanceMetadata(title="input.png", model="claude-opus-4-8"))
+sign_asset(
+    "input.png",
+    "signed.png",
+    config,
+    ProvenanceMetadata(title="input.png", model="claude-opus-4-8"),
+)
 ```
 
-- **Signing via `Signer.from_callback`** — the same interface a KMS/HSM signer
-  uses (the key signs inside a callback), so dev (local key) and production (KMS)
-  share one code path. ES256 (EC P-256).
+- **Signing via `Signer.from_callback`** — the key signs inside a callback, which is
+  the seam a KMS/HSM signer would plug into. Swapping the callback is the whole change
+  such an integration would need; **no KMS backend ships here.** ES256 (EC P-256).
 - **RFC3161 timestamp** is optional (`RFC3161_TSA_URL`): when set, the TSA
   countersignature gives the C2PA claim an AdES "T"-level trusted time, linking to
   the F6 ledger. Without it, signing is fully offline.
@@ -305,11 +309,11 @@ the same `c2pa-python==0.36.0`.
 from attestor.provenance import verify_asset
 
 report = verify_asset("signed.png")
-report.validation_state   # "Valid" — manifest intact, claim well-formed
-report.integrity_ok       # True
-report.trusted            # False — the signer is NOT on any trust list
-report.trust_reason       # "signingCredential.untrusted: ... not on any configured trust list"
-report.headline           # "integrity Valid (...); signer UNTRUSTED — ..."
+report.validation_state  # "Valid" — manifest intact, claim well-formed
+report.integrity_ok  # True
+report.trusted  # False — the signer is NOT on any trust list
+report.trust_reason  # "signingCredential.untrusted: ... not on any configured trust list"
+report.headline  # "integrity Valid (...); signer UNTRUSTED — ..."
 ```
 
 - **Integrity** (`validation_state`) answers "is the manifest intact and the claim
@@ -352,14 +356,14 @@ network.
 ```python
 from attestor.ledger import Ledger, generate_ledger_key, load_private_key, save_ledger
 
-generate_ledger_key("ledger.key")               # dev only — never commit; prod uses a KMS/HSM
+generate_ledger_key("ledger.key")  # dev only — never commit; the path is config-driven
 key = load_private_key("ledger.key")
 
 ledger = Ledger()
 ledger.append({"type": "dossier", "id": "sys-1", "sha256": "…"})
 ledger.append({"type": "c2pa", "id": "img-1", "sha256": "…"})
 
-signed = ledger.seal(key)                        # Merkle root + Ed25519 signature (deterministic)
+signed = ledger.seal(key)  # Merkle root + Ed25519 signature (deterministic)
 save_ledger("out/ledger", ledger.records, signed)
 ```
 
@@ -407,18 +411,28 @@ audit, certification, completed assessment, or statement of conformity.
 
 ```python
 from attestor.classifier import SystemProfile, classify, load_bundle
-from attestor.governance import Art12Event, Art12EventType, Art12Log, derive_crosswalk, generate_fria
+from attestor.governance import (
+    Art12Event,
+    Art12EventType,
+    Art12Log,
+    derive_crosswalk,
+    generate_fria,
+)
 
 bundle = load_bundle("v2026-08")
 profile = SystemProfile(role="deployer", deployer_type="public_body", annex_iii_area="employment")
 classification = classify(profile, bundle)
 
-crosswalk = derive_crosswalk(classification)    # AI Act obligation → ISO/IEC 42001 clauses + Annex A
-fria = generate_fria(profile, classification)   # Art. 27(1)(a)–(f) scaffold (raises if FRIA doesn't apply)
+crosswalk = derive_crosswalk(classification)  # AI Act obligation → ISO/IEC 42001 clauses + Annex A
+fria = generate_fria(
+    profile, classification
+)  # Art. 27(1)(a)–(f) scaffold (raises if FRIA doesn't apply)
 
 log = Art12Log()
-log.record(Art12Event(event_type=Art12EventType.risk_situation, occurred_at="2026-08-03T10:00:00+00:00"))
-signed = log.seal(ledger_key)                   # tamper-evident, offline-verifiable via the F6 ledger
+log.record(
+    Art12Event(event_type=Art12EventType.risk_situation, occurred_at="2026-08-03T10:00:00+00:00")
+)
+signed = log.seal(ledger_key)  # tamper-evident, offline-verifiable via the F6 ledger
 ```
 
 - **ISO/IEC 42001 crosswalk.** For each applied AI Act obligation it points to the related
@@ -491,9 +505,9 @@ committed), so the C2PA signer is honestly **untrusted** and the ledger still ve
 | Layer | Technology |
 |-------|------------|
 | Classifier | Python deterministic rule engine (no LLM in the decision), versioned YAML/JSON bundle |
-| Annex IV | LLM **for drafting only**, with citations validated against the bundle |
+| Annex IV | Deterministic template derived from the classification, no LLM. Citations validated against the bundle |
 | C2PA | `c2pa-python` (`Builder` to sign, `Reader` to verify) |
-| C2PA keys | KMS/HSM (AWS KMS) in production; local file in dev |
+| C2PA keys | Local PEM chain + key, read from config. `Signer.from_callback` is the seam a KMS/HSM signer would plug into; no KMS backend ships here |
 | Timestamp | RFC3161 TSA (AdES "T" level) |
 | Ledger | Ed25519 (`cryptography`) + custom Merkle tree + RFC3161 |
 | Governance | ISO/IEC 42001 reference crosswalk + FRIA (Art. 27) scaffold + Art. 12 logs |

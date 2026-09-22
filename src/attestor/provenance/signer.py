@@ -2,7 +2,7 @@
 
 Signs an asset with a C2PA manifest using a certificate chain + private key taken
 from config (never hardcoded). The signer is built via ``Signer.from_callback`` —
-the same interface a KMS/HSM-backed signer uses (the key signs inside the
+the seam a KMS/HSM-backed signer would plug into (the key signs inside the
 callback), so dev and production share one code path. An optional RFC3161 TSA URL
 adds a trusted timestamp (AdES "T"); without it, signing is fully offline. ES256
 (EC P-256) only in F4.
