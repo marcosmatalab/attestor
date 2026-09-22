@@ -1,0 +1,19 @@
+# Pinned to the same ruff the CI uses. A drift between the two is what turned the
+# format gate red once already, so the version is duplicated on purpose and must be
+# bumped in both places at once (here and in pyproject.toml).
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.8
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict

@@ -38,7 +38,7 @@ def request_timestamp(message: bytes, tsa_url: str, *, timeout: int = 30) -> byt
         tsa_url, data=request.as_bytes(), headers={"Content-Type": _TIMESTAMP_QUERY}
     )
     with urllib.request.urlopen(http_request, timeout=timeout) as response:
-        token_bytes = response.read()
+        token_bytes: bytes = response.read()
     decoded = tsp.decode_timestamp_response(token_bytes)
     if int(decoded.status) not in _GRANTED:
         raise ValueError(f"TSA did not grant the timestamp (status {decoded.status})")

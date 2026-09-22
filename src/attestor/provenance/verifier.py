@@ -20,7 +20,7 @@ always untrusted. Verification is deterministic: the same bytes yield the same r
 import io
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import c2pa
 
@@ -40,6 +40,18 @@ _TRUSTED_CODE = "signingCredential.trusted"
 # Standard C2PA actions assertion (v2) and Attestor's custom AI-disclosure assertion.
 _ACTIONS_LABEL = "c2pa.actions.v2"
 _DISCLOSURE_LABEL = "com.attestor.ai_disclosure"
+
+
+# Explicit public surface. Without it mypy --strict treats every name this module
+# re-exports through attestor.provenance as private, which is a real question about
+# intent, not a formality.
+__all__ = [
+    "AiDisclosure",
+    "SignerIdentity",
+    "ValidationCodes",
+    "VerificationReport",
+    "verify_asset",
+]
 
 
 def verify_asset(source: str | Path | bytes, *, format: str = "image/png") -> VerificationReport:
@@ -78,11 +90,11 @@ def _is_manifest_not_found(exc: c2pa.C2paError) -> bool:
 
 
 def _active_manifest(report: dict[str, Any]) -> dict[str, Any]:
-    manifests = report.get("manifests", {})
+    manifests: dict[str, Any] = report.get("manifests", {})
     active_label = report.get("active_manifest")
     if active_label in manifests:
-        return manifests[active_label]
-    return next(iter(manifests.values()), {})
+        return cast(dict[str, Any], manifests[active_label])
+    return cast(dict[str, Any], next(iter(manifests.values()), {}))
 
 
 def _collect_codes(reader: c2pa.Reader) -> ValidationCodes:
