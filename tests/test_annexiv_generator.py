@@ -66,13 +66,28 @@ def test_gpai_obligation_falls_to_the_appendix() -> None:
     assert "gpai_art53_documentation" in {c.obligation_id for c in appendix.citations}
 
 
-def test_omnibus_dossier_carries_provisional_note_and_deferred_dates() -> None:
+def test_historical_omnibus_dossier_still_carries_its_provisional_note() -> None:
+    """A dossier drawn up under the frozen overlay keeps saying what it said."""
     bundle = load_bundle("omnibus-2026")
     profile = SystemProfile(role=Role.provider, annex_iii_area=AnnexIIIArea.employment)
     dossier = generate_dossier(profile, classify(profile, bundle), bundle)
 
     assert dossier.scenario == "omnibus"
     assert "provisional" in dossier.provisional_note.lower()
+    section5 = next(s for s in dossier.sections if s.number == "5")
+    assert section5.citations[0].effective_date.isoformat() == "2027-12-02"
+
+
+def test_in_force_dossier_states_the_law_binds_rather_than_a_caveat() -> None:
+    """The note travels from the bundle meta to the dossier and on to the PDF, so
+    a dossier issued today must not tell its reader the timeline is provisional."""
+    bundle = load_bundle("reg-2026-1744")
+    profile = SystemProfile(role=Role.provider, annex_iii_area=AnnexIIIArea.employment)
+    dossier = generate_dossier(profile, classify(profile, bundle), bundle)
+
+    assert dossier.scenario == "in-force"
+    assert "in force" in dossier.provisional_note.lower()
+    assert "provisional" not in dossier.provisional_note.lower()
     section5 = next(s for s in dossier.sections if s.number == "5")
     assert section5.citations[0].effective_date.isoformat() == "2027-12-02"
 

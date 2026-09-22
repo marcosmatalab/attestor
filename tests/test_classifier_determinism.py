@@ -19,7 +19,7 @@ from attestor.classifier import (
 
 
 def test_full_classification_is_reproducible() -> None:
-    bundle = load_bundle()
+    bundle = load_bundle("v2026-08")
     profile = SystemProfile(
         role=Role.deployer,
         annex_iii_area=AnnexIIIArea.credit_scoring,
@@ -35,7 +35,7 @@ def test_full_classification_is_reproducible() -> None:
 
 
 def test_relevant_input_change_changes_the_output() -> None:
-    bundle = load_bundle()
+    bundle = load_bundle("v2026-08")
     minimal = classify(SystemProfile(role=Role.provider), bundle)
     high = classify(
         SystemProfile(role=Role.provider, annex_iii_area=AnnexIIIArea.employment), bundle
@@ -48,7 +48,7 @@ def test_relevant_input_change_changes_the_output() -> None:
 
 
 def test_bundle_change_flows_into_output_and_checksum() -> None:
-    bundle = load_bundle()
+    bundle = load_bundle("v2026-08")
     profile = SystemProfile(role=Role.provider, annex_iii_area=AnnexIIIArea.employment)
     before = classify(profile, bundle)
 

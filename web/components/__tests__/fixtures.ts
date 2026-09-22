@@ -29,26 +29,26 @@ export const OBLIGATIONS: ObligationTimeline[] = [
 ];
 
 export const OMNIBUS_STATUS =
-  "Provisional, not yet in force (as of 2026-06-23). Until then the binding timeline remains the legal-text scenario.";
+  "In force. Regulation (EU) 2026/1744 (Digital Omnibus on AI) was adopted by the Council on 2026-06-29, published in the Official Journal on 2026-07-24, and entered into force on 2026-07-27.";
 
 export const DEMO_RESULT: DemoResult = {
   bundle: {
-    version: "v2026-08",
-    sha256: "7e77bc0715a2b5836f83e6c50e69ab312ca8b7167c1c747674d8143a3312d49d",
-    scenario: "legal-text",
+    version: "reg-2026-1744",
+    sha256: "6a8cba0a08bcf03868224155c0af24fda24973a3aade595be0e1f7ae563f2c1a",
+    scenario: "in-force",
     status: "in-force",
-    status_note: "",
+    status_note: "In force since 2026-07-27.",
   },
   classification: {
     risk: "high",
-    checksum: "15815cd8f577dea7cc09696acc9a3e96870664573ea428e7c81bb8b06a84bd17",
-    bundle_sha256: "7e77bc0715a2b5836f83e6c50e69ab312ca8b7167c1c747674d8143a3312d49d",
+    checksum: "d821e3e0b95d4edda4416916f2a5b02ef0296f34704a0010ee0222b3a9e0ee48",
+    bundle_sha256: "6a8cba0a08bcf03868224155c0af24fda24973a3aade595be0e1f7ae563f2c1a",
     obligations: [
       {
         id: "art9_risk_management",
         reference: "Art. 9",
         title: "Risk management system",
-        effective_date: "2026-08-02",
+        effective_date: "2027-12-02",
       },
     ],
   },
@@ -68,7 +68,7 @@ export const DEMO_RESULT: DemoResult = {
     headline:
       "integrity Valid (manifest intact, claim well-formed); signer UNTRUSTED (not in a recognised C2PA trust list)",
     classification_checksum:
-      "15815cd8f577dea7cc09696acc9a3e96870664573ea428e7c81bb8b06a84bd17",
+      "d821e3e0b95d4edda4416916f2a5b02ef0296f34704a0010ee0222b3a9e0ee48",
   },
   ledger: {
     leaf_count: 3,

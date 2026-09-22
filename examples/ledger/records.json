@@ -2,21 +2,21 @@
   {
     "id": "rec-1",
     "kind": "classification",
-    "payload_sha256": "15815cd8f577dea7cc09696acc9a3e96870664573ea428e7c81bb8b06a84bd17",
+    "payload_sha256": "d821e3e0b95d4edda4416916f2a5b02ef0296f34704a0010ee0222b3a9e0ee48",
     "recorded_at": "2026-01-01T00:00:00Z",
     "subject": "sys-1"
   },
   {
     "id": "rec-2",
     "kind": "annex-iv-dossier",
-    "payload_sha256": "a8a5e5e3b9ccbe49b3e4613fe07e0e1f5cb69d003d1f134b66bd0fb6ff23d185",
+    "payload_sha256": "6b4f213cf9693074557faa9fa4677d468e7a6bfe1b62e97e640e58d775d6d478",
     "recorded_at": "2026-01-01T00:00:00Z",
     "subject": "sys-1"
   },
   {
     "id": "rec-3",
     "kind": "c2pa-manifest",
-    "payload_sha256": "4dcc7e244d6781b55c80fe1e9cf10707a327569ba6986a2e06d0ff4893caca64",
+    "payload_sha256": "733b647e8a8304b439899a73899eb575a186f4ddbbf8c71b435d2ae5eb28cf62",
     "recorded_at": "2026-01-01T00:00:00Z",
     "subject": "sys-1"
   }

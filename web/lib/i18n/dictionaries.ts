@@ -122,8 +122,8 @@ const en: Dictionary = {
   timeline: {
     caption: "The same system under each timeline scenario.",
     thObligation: "Obligation",
-    thLegalText: "Legal text (Reg. 2024/1689)",
-    thOmnibus: "Omnibus (provisional)",
+    thLegalText: "As enacted (Reg. 2024/1689)",
+    thOmnibus: "In force (Reg. 2026/1744)",
     notApplicable: "n/a",
   },
   status: {
@@ -132,7 +132,7 @@ const en: Dictionary = {
     untrusted: "SIGNER UNTRUSTED",
     trusted: "SIGNER TRUSTED",
     provisionalBanner:
-      "The binding legal text remains Reg. (EU) 2024/1689. The Omnibus column is provisional.",
+      "The right-hand column is the law in force: Reg. (EU) 2026/1744 (Digital Omnibus on AI), binding since 27 July 2026. The left-hand column is Reg. (EU) 2024/1689 as originally enacted. Both are shown, because knowing what changed is part of the answer.",
   },
 };
 
@@ -195,8 +195,8 @@ const es: Dictionary = {
   timeline: {
     caption: "El mismo sistema bajo cada escenario de calendario.",
     thObligation: "Obligación",
-    thLegalText: "Texto legal (Regl. 2024/1689)",
-    thOmnibus: "Omnibus (provisional)",
+    thLegalText: "Texto original (Regl. 2024/1689)",
+    thOmnibus: "En vigor (Regl. 2026/1744)",
     notApplicable: "n/d",
   },
   status: {
@@ -205,7 +205,7 @@ const es: Dictionary = {
     untrusted: "FIRMANTE NO CONFIABLE",
     trusted: "FIRMANTE CONFIABLE",
     provisionalBanner:
-      "El texto legal vinculante sigue siendo el Regl. (UE) 2024/1689. La columna Omnibus es provisional.",
+      "La columna de la derecha es el derecho vigente: Regl. (UE) 2026/1744 (Omnibus Digital sobre IA), vinculante desde el 27 de julio de 2026. La de la izquierda es el Regl. (UE) 2024/1689 en su texto original. Se muestran las dos, porque saber qué cambió forma parte de la respuesta.",
   },
 };
 
