@@ -10,7 +10,7 @@ cases:
     expected:
       risk: high
       scenario: legal-text
-      provisional_note: false
+      status_note: false
       legal_basis: { id: art11_technical_documentation, reference: "Art. 11", effective_date: "2026-08-02" }
       sections:
         "1": [[art13_transparency_deployers, "2026-08-02"]]
@@ -32,7 +32,7 @@ cases:
     expected:
       risk: high
       scenario: omnibus
-      provisional_note: true
+      status_note: true
       legal_basis: { id: art11_technical_documentation, reference: "Art. 11", effective_date: "2027-12-02" }
       sections:
         "1": [[art13_transparency_deployers, "2027-12-02"]]
@@ -54,7 +54,7 @@ cases:
     expected:
       risk: high
       scenario: legal-text
-      provisional_note: false
+      status_note: false
       legal_basis: { id: art11_technical_documentation, reference: "Art. 11", effective_date: "2026-08-02" }
       sections:
         "1": [[art13_transparency_deployers, "2026-08-02"]]

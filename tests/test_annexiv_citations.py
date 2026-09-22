@@ -25,7 +25,7 @@ def _dossier(
         bundle_sha256="x",
         classification_checksum="x",
         legal_basis=legal_basis,
-        provisional_note="",
+        status_note="",
         sections=(DossierSection(number="5", title="t", guidance="g", citations=citations),),
     )
 

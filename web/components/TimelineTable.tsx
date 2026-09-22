@@ -6,8 +6,9 @@ import { Callout, Card, Mono, TableWrap, cellDiverges } from "@/components/ui";
 
 export function TimelineTable({ timeline }: { timeline: Timeline }) {
   const { t } = useLocale();
-  // The Omnibus status is engine output (its provisional caveat) — interpolated verbatim.
-  const status = timeline.omnibus_status || "pending formal adoption";
+  // The status is engine output, read from the binding bundle's meta — interpolated
+  // verbatim. The fallback is only for an empty response, never a second source of truth.
+  const status = timeline.omnibus_status || "in force";
   return (
     <Card title={t("timeline.title")}>
       <Callout tone="caveat">{t("timeline.caveat", { status })}</Callout>
