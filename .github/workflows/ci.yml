@@ -27,14 +27,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      - name: Ruff lint
-        run: ruff check .
-
-      - name: Ruff format check
-        run: ruff format --check .
-
-      - name: Pytest
-        run: pytest
+      # One step, on purpose. `make check` is what a contributor runs locally, so
+      # running the same target here is the only way the Makefile is ever actually
+      # tested -- and it removes the chance of the two lists drifting apart.
+      # It runs, in order: ruff check, ruff format --check, mypy, vulture, pytest
+      # (whose addopts carry the coverage floor).
+      - name: All gates (make check)
+        run: make check
 
   frontend:
     name: Frontend build & test (Node 24)

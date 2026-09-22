@@ -76,7 +76,8 @@ def sign_asset(
     builder = c2pa.Builder(json.dumps(build_manifest(metadata)))
     source = io.BytesIO(Path(source_path).read_bytes())
     dest = io.BytesIO()
-    manifest_bytes = builder.sign(signer, metadata.format, source, dest)
+    # c2pa-python is untyped, so annotate what it actually returns.
+    manifest_bytes: bytes = builder.sign(signer, metadata.format, source, dest)
     Path(dest_path).write_bytes(dest.getvalue())
     return manifest_bytes
 
