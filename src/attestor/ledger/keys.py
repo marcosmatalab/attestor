@@ -5,7 +5,8 @@ never committed. The public key is published so third parties can verify offline
 verifier needs only the public key, never the private one. Ed25519 signatures are
 deterministic (RFC 8032): the same key and message always produce the same 64-byte
 signature, part of the ledger's reproducibility contract. FOR DEVELOPMENT the key can be
-generated locally; in production it lives in a KMS/HSM.
+generated locally, and the path is config-driven; a KMS/HSM signer would replace
+this loader. No such backend is implemented here.
 """
 
 from pathlib import Path
