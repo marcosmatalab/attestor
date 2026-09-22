@@ -1,7 +1,7 @@
 # Attestor
 
-> **Status: `pre-alpha`.** F0–F7 complete: deterministic classifier, Annex IV dossier,
-> C2PA provenance, governance views, and an offline-verifiable ledger. F8 (dashboard) is next.
+> **Status: `pre-alpha`.** F0–F8 complete: deterministic classifier, Annex IV dossier,
+> C2PA provenance, governance views, an offline-verifiable ledger, and a Next.js dashboard.
 
 **Attestor is a deterministic EU AI Act compliance engine.** You register an AI
 system and Attestor (1) **classifies its risk** under the EU AI Act (prohibited /
@@ -90,7 +90,7 @@ Configuration is read from environment variables / a local `.env` (see
 | **F5** | C2PA verifier — reports signer + assertions + the provenance **nuance** | ✅ |
 | **F6** | Ledger Ed25519 + Merkle + RFC3161, **offline** verification via CLI | ✅ |
 | **F7** | Governance: ISO/IEC 42001 mapping + FRIA (Art. 27) + Art. 12 logs | ✅ |
-| **F8** | Dashboard (Next.js) + polish + demo | ⏳ |
+| **F8** | Dashboard (Next.js) + polish + demo | ✅ |
 
 > **Bundle schema note (F1 design constraint):** effective dates are stored
 > **per obligation**, not as a single global date — so F2 can add the Omnibus
