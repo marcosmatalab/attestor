@@ -64,7 +64,7 @@ export interface Dossier {
   system_name: string;
   risk: string;
   classification_checksum: string;
-  provisional_note: string;
+  status_note: string;
   legal_basis: Citation | null;
   sections: DossierSection[];
 }

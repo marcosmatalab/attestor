@@ -25,7 +25,7 @@ def test_annexiv_golden(case: dict) -> None:
 
     assert dossier.risk.value == expected["risk"]
     assert dossier.scenario == expected["scenario"]
-    assert bool(dossier.provisional_note) == expected["provisional_note"]
+    assert bool(dossier.status_note) == expected["status_note"]
 
     assert dossier.legal_basis is not None
     assert dossier.legal_basis.obligation_id == expected["legal_basis"]["id"]

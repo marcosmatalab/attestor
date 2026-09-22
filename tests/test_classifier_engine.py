@@ -17,7 +17,7 @@ from attestor.classifier.model import (
 
 @pytest.fixture(scope="module")
 def bundle() -> Bundle:
-    return load_bundle()
+    return load_bundle("v2026-08")
 
 
 # --- predicate matcher -------------------------------------------------------

@@ -11,8 +11,8 @@ describe("TimelineTable", () => {
     expect(screen.getByText("2027-12-02")).toBeInTheDocument(); // Omnibus
   });
 
-  it("surfaces the provisional Omnibus caveat verbatim", () => {
+  it("surfaces the engine's status note verbatim", () => {
     render(<TimelineTable timeline={timeline()} />);
-    expect(screen.getByText(/pending formal adoption \(provisional\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/In force since 2026-07-27/i)).toBeInTheDocument();
   });
 });

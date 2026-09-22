@@ -24,7 +24,9 @@ from attestor.provenance import (
 )
 
 client = TestClient(app)
-_BUNDLE = load_bundle("v2026-08")
+# Must match LEGAL_TEXT_BUNDLE in attestor.api.routes: the API serves the law in
+# force. Written as a literal so changing what the API serves fails loudly here.
+_BUNDLE = load_bundle("reg-2026-1744")
 _TEST_KEY = Ed25519PrivateKey.from_private_bytes(bytes(range(32)))
 
 

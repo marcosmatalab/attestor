@@ -80,7 +80,7 @@ def generate_dossier(
         bundle_sha256=classification.bundle_sha256,
         classification_checksum=classification.checksum,
         legal_basis=legal_basis,
-        provisional_note=str(bundle.meta.get("status_note", "")).strip(),
+        status_note=str(bundle.meta.get("status_note", "")).strip(),
         sections=tuple(sections),
     )
 
