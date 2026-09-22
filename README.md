@@ -18,6 +18,42 @@ the same output, with a checksum, reproducible for an auditor.
 
 ---
 
+## Verify it in 60 seconds
+
+No keys, no network, no guessing. From a clean clone:
+
+```bash
+pip install -e .
+
+# 1. A third party verifies the committed ledger offline
+attestor ledger verify examples/ledger
+# ledger VERIFIED (Merkle root intact, Ed25519 signature valid); no timestamp
+# exit 0
+
+# 2. Tamper with one byte and the verdict flips
+sed -i 's/sys-1/sys-9/' examples/ledger/records.json
+attestor ledger verify examples/ledger
+# ledger TAMPERED - integrity_ok=False, signature_ok=True
+# exit 1
+git checkout examples/ledger/records.json
+
+# 3. Reproduce a classification checksum, under any scenario
+attestor classify --role provider --annex-iii-area employment --checksum-only
+# d821e3e0b95d4edda4416916f2a5b02ef0296f34704a0010ee0222b3a9e0ee48   (law in force)
+attestor classify --role provider --annex-iii-area employment --bundle v2026-08 --checksum-only
+# 15815cd8f577dea7cc09696acc9a3e96870664573ea428e7c81bb8b06a84bd17   (as enacted)
+
+# 4. The whole pipeline end to end
+attestor demo
+```
+
+Step 2 is the one worth pausing on: `integrity_ok` goes false while `signature_ok`
+stays true. The signature covers the sealed Merkle root, so an edited record says
+*the evidence was changed after sealing* - a different accusation from *the
+signature is wrong*.
+
+---
+
 ## Architecture
 
 ```
