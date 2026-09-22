@@ -14,7 +14,11 @@ from cryptography import x509
 from attestor.ledger.ledger import load_ledger
 from attestor.ledger.verifier import verify_ledger
 
-_USAGE = "usage: python -m attestor.ledger <ledger_dir>"
+_USAGE = (
+    "usage: python -m attestor.ledger <ledger_dir>\n"
+    "  e.g. python -m attestor.ledger examples/ledger   "
+    "(a committed, verifiable ledger ships with this repo)"
+)
 
 
 def main(argv: list[str] | None = None) -> int:

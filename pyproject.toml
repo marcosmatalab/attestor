@@ -47,6 +47,9 @@ dev = [
     "ruff==0.16.8",
 ]
 
+[project.scripts]
+attestor = "attestor.cli:main"
+
 [tool.hatch.version]
 path = "src/attestor/__init__.py"
 
