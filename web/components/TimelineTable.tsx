@@ -9,7 +9,7 @@
 import type { ObligationTimeline } from "@/lib/types";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 
-export const FALLBACK_STATUS = "pending formal adoption";
+export const FALLBACK_STATUS = "in force";
 
 export interface TimelineTableProps {
   obligations: ObligationTimeline[];

@@ -22,8 +22,16 @@ def client() -> TestClient:
 
 @pytest.fixture(scope="module")
 def engine_result():
+    """The legal-text classification the /api/classify tests pin."""
     profile = SystemProfile(role=Role.provider, annex_iii_area=AnnexIIIArea.employment)
     return classify(profile, load_bundle("v2026-08"))
+
+
+@pytest.fixture(scope="module")
+def default_result():
+    """What the demo produces: the same profile under the bundle in force."""
+    profile = SystemProfile(role=Role.provider, annex_iii_area=AnnexIIIArea.employment)
+    return classify(profile, load_bundle())
 
 
 def test_bundles_are_listed_with_their_content_hashes(client: TestClient) -> None:
@@ -89,10 +97,11 @@ def test_governance_returns_all_three_views(client: TestClient) -> None:
     assert body["log_retention"]
 
 
-def test_demo_runs_the_whole_pipeline(client: TestClient, engine_result) -> None:
+def test_demo_runs_the_whole_pipeline(client: TestClient, default_result) -> None:
     body = client.post("/api/demo/run").json()
 
-    assert body["classification"]["checksum"] == engine_result.checksum
+    assert body["classification"]["checksum"] == default_result.checksum
+    assert body["bundle"]["version"] == "reg-2026-1744"
     assert body["provenance"]["integrity_ok"] is True
     assert body["provenance"]["trusted"] is False
     assert body["ledger"]["verification"]["verified"] is True

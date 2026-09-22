@@ -17,7 +17,7 @@ _VECTORS = yaml.safe_load(_GOLDEN_PATH.read_text(encoding="utf-8"))["vectors"]
 
 @pytest.fixture(scope="module")
 def bundle() -> Bundle:
-    return load_bundle()
+    return load_bundle("v2026-08")
 
 
 @pytest.mark.parametrize("vector", _VECTORS, ids=[v["name"] for v in _VECTORS])
