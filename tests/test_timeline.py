@@ -19,7 +19,8 @@ def test_high_risk_annex_iii_dates_diverge_but_risk_does_not() -> None:
     comparison = compare_timelines(
         SystemProfile(role=Role.provider, annex_iii_area=AnnexIIIArea.employment)
     )
-    assert comparison.binding_scenario == "legal-text"
+    # The scenario that binds is the law in force, not the text as first enacted.
+    assert comparison.binding_scenario == "in-force"
     assert comparison.legal_text_risk.value == "high"
     assert comparison.omnibus_risk.value == "high"
     assert comparison.risk_diverges is False
@@ -74,7 +75,22 @@ def test_nudifier_diverges_from_limited_to_prohibited() -> None:
 
 
 def test_caveat_is_read_from_the_bundle_meta_not_hardcoded() -> None:
+    """The status text must come from whichever bundle binds.
+
+    This test is why the Omnibus becoming law cost one constant: the caveat was never
+    a literal in the code, so the value changed and the mechanism did not.
+    """
     comparison = compare_timelines(SystemProfile(role=Role.provider))
-    expected = str(load_bundle("omnibus-2026").meta["status_note"]).strip()
+    expected = str(load_bundle("reg-2026-1744").meta["status_note"]).strip()
+
     assert comparison.omnibus_status == expected
+    assert "in force" in comparison.omnibus_status.lower()
+    assert "provisional" not in comparison.omnibus_status.lower()
+
+
+def test_comparing_against_the_frozen_provisional_overlay_still_works() -> None:
+    """The historical scenario stays reachable, and still says what it said."""
+    comparison = compare_timelines(
+        SystemProfile(role=Role.provider), omnibus_bundle=load_bundle("omnibus-2026")
+    )
     assert "provisional" in comparison.omnibus_status.lower()

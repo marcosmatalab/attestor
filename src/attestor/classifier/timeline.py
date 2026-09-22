@@ -1,12 +1,15 @@
-"""Dual-scenario timeline: the same profile under both bundles, side by side.
+"""Dual-scenario timeline: the same profile under two bundles, side by side.
 
-The value of F2 is showing BOTH timelines honestly — not replacing the binding
-legal text with the Omnibus. ``compare_timelines`` classifies one profile under
-the legal-text bundle (the binding default) and the provisional Omnibus bundle,
-then reports, per obligation, the legal-text date vs the Omnibus date.
+The value of this view is showing BOTH timelines honestly. It used to contrast the
+binding legal text with a *provisional* Omnibus; since Regulation (EU) 2026/1744
+entered into force on 2026-07-27 it contrasts the Regulation **as originally
+enacted** with the Regulation **as it binds today**. Knowing what changed, and when,
+is part of the answer a compliance owner needs.
 
-The provisional caveat is read from the Omnibus bundle's own ``meta.status_note``
-— a single source of truth — never hardcoded here (the adoption status changes).
+That this module survived the Omnibus becoming law with a constant change and no new
+logic is the point of the design: the caveat is read from the binding bundle's own
+``meta.status_note`` — a single source of truth — and never hardcoded here,
+because the status is precisely the thing that changes.
 """
 
 from datetime import date
@@ -17,9 +20,12 @@ from attestor.classifier.bundle import Bundle, load_bundle
 from attestor.classifier.engine import classify
 from attestor.classifier.model import RiskTier, SystemProfile
 
-BINDING_SCENARIO = "legal-text"
+BINDING_SCENARIO = "in-force"
 LEGAL_TEXT_VERSION = "v2026-08"
+# The Omnibus as modelled on 2026-06-23, while it was still a proposal. Kept for
+# comparison; it is no longer what binds.
 OMNIBUS_VERSION = "omnibus-2026"
+IN_FORCE_VERSION = "reg-2026-1744"
 
 
 class ObligationTimeline(BaseModel):
@@ -39,14 +45,17 @@ class ObligationTimeline(BaseModel):
 
 
 class TimelineComparison(BaseModel):
-    """The legal-text vs Omnibus comparison for one profile."""
+    """One profile under the Regulation as enacted and as it binds today."""
 
     model_config = ConfigDict(frozen=True)
 
     binding_scenario: str
     legal_text_risk: RiskTier
     omnibus_risk: RiskTier
-    omnibus_status: str  # provisional caveat, read from the Omnibus bundle meta
+    # Status note of the bundle that BINDS, read from its ``meta``. The field keeps the
+    # name ``omnibus_status`` so the API and the dashboard do not break; what it carries
+    # is now the in-force note rather than the provisional one.
+    omnibus_status: str
     obligations: tuple[ObligationTimeline, ...]
 
     @property
@@ -64,9 +73,13 @@ def compare_timelines(
     legal_bundle: Bundle | None = None,
     omnibus_bundle: Bundle | None = None,
 ) -> TimelineComparison:
-    """Classify ``profile`` under both scenarios and return the per-obligation deltas."""
+    """Classify ``profile`` under both scenarios and return the per-obligation deltas.
+
+    The second bundle defaults to the one in force. Pass ``omnibus_bundle`` explicitly to
+    compare against the frozen provisional overlay instead.
+    """
     legal_bundle = legal_bundle or load_bundle(LEGAL_TEXT_VERSION)
-    omnibus_bundle = omnibus_bundle or load_bundle(OMNIBUS_VERSION)
+    omnibus_bundle = omnibus_bundle or load_bundle(IN_FORCE_VERSION)
 
     legal = classify(profile, legal_bundle)
     omnibus = classify(profile, omnibus_bundle)
