@@ -49,7 +49,8 @@ export function timeline(): Timeline {
     binding_scenario: "legal-text",
     legal_text_risk: "high",
     omnibus_risk: "high",
-    omnibus_status: "pending formal adoption (provisional)",
+    omnibus_status:
+      "In force since 2026-07-27 (Reg. (EU) 2026/1744, Digital Omnibus on AI).",
     obligations: [
       {
         id: "art9_risk_management",

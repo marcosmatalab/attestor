@@ -11,7 +11,9 @@ from attestor.api.main import app
 from attestor.classifier import SystemProfile, classify, compare_timelines, load_bundle
 
 client = TestClient(app)
-_BUNDLE = load_bundle("v2026-08")
+# Must match LEGAL_TEXT_BUNDLE in attestor.api.routes: the API serves the law in
+# force. Written as a literal so changing what the API serves fails loudly here.
+_BUNDLE = load_bundle("reg-2026-1744")
 
 _HIGH_PROVIDER = {"role": "provider", "annex_iii_area": "employment"}
 
