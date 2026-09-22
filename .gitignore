@@ -34,3 +34,6 @@ reports/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Working plan documents (not part of the repository)
+PLAN-*.md
