@@ -31,14 +31,18 @@ def verify_ledger(
     integrity_ok = _verify_integrity(records, signed_root)
     signature_ok = _verify_signature(signed_root)
 
-    has_timestamp = signed_root.timestamp is not None
+    # Narrow the Optional directly rather than through a separate flag: the flag
+    # carried the same information but the type checker could not see the link,
+    # which is what the two union-attr errors here were really pointing at.
+    timestamp = signed_root.timestamp
+    has_timestamp = timestamp is not None
     timestamp_ok = False
     tsa_trusted = False
-    gen_time = signed_root.timestamp.gen_time if has_timestamp else None
+    gen_time = timestamp.gen_time if timestamp is not None else None
     detail = ""
-    if has_timestamp:
+    if timestamp is not None:
         if tsa_leaf is not None and tsa_root is not None:
-            token = base64.b64decode(signed_root.timestamp.token_b64)
+            token = base64.b64decode(timestamp.token_b64)
             message = bytes.fromhex(signed_root.signature)
             timestamp_ok, gen_time = verify_timestamp(
                 token, message, tsa_leaf=tsa_leaf, tsa_root=tsa_root
