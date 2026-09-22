@@ -1,8 +1,10 @@
 """Versioned regulatory bundle: the data the engine interprets.
 
 A bundle is the *interpretation* of the regulation, kept as versioned data rather
-than hardcoded logic — so it can be audited, diffed, and superseded. F2 will add a
-Digital Omnibus scenario as a separate bundle file, never a migration of this one.
+than hardcoded logic — so it can be audited, diffed, and superseded. A new scenario
+is always a NEW bundle file, never a migration of an existing one: the ledger anchors
+bundle hashes, and rewriting an artifact whose digest is already anchored is exactly
+what an evidence system must not do.
 
 Content-addressing: the bundle's identity is the SHA-256 of its canonical content,
 not its version string. Editing any byte of meaning changes ``sha256`` and, in
@@ -16,7 +18,7 @@ import yaml
 
 from attestor.canonical import canonical_json, sha256_hex
 
-DEFAULT_VERSION = "v2026-08"
+DEFAULT_VERSION = "reg-2026-1744"
 _CLASSIFIER_PACKAGE = "attestor.classifier"
 _REQUIRED_KEYS = ("meta", "articles", "risk_tier_rules", "obligation_rules", "obligations")
 
