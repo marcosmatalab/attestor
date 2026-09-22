@@ -367,12 +367,26 @@ signed = ledger.seal(key)  # Merkle root + Ed25519 signature (deterministic)
 save_ledger("out/ledger", ledger.records, signed)
 ```
 
+A ledger produced that way ships with the repository, so you can check the claim
+before writing any of the above:
+
 ```bash
 # Offline verifier — public artifacts only (records.json, signed_root.json, optional tsa/*.pem)
-python -m attestor.ledger out/ledger
-# ledger VERIFIED (Merkle root intact, Ed25519 signature valid); timestamped … - TSA UNTRUSTED …
-# exit 0 if intact and signed, exit 1 if tampering is detected
+attestor ledger verify examples/ledger
+# ledger VERIFIED (Merkle root intact, Ed25519 signature valid); no timestamp
+# exit 0
+
+# Edit one byte and the verdict flips, while the signature still checks out
+sed -i 's/sys-1/sys-9/' examples/ledger/records.json
+attestor ledger verify examples/ledger
+# ledger TAMPERED - integrity_ok=False, signature_ok=True
+# exit 1
+git checkout examples/ledger/records.json
 ```
+
+`python -m attestor.ledger <dir>` is the same verifier without installing the
+package. Exit codes are the interface: `0` verified, `1` tampered, `2` usage or I/O
+error — and TSA trust never moves them.
 
 - **Deterministic.** Same records + same key → same Merkle root and same Ed25519
   signature (RFC 8032). The RFC 3161 token is *not* byte-reproducible (it depends on the
