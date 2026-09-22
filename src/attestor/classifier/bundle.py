@@ -12,7 +12,7 @@ turn, every classification checksum derived from it.
 """
 
 import importlib.resources
-from typing import Any
+from typing import Any, cast
 
 import yaml
 
@@ -24,7 +24,13 @@ _REQUIRED_KEYS = ("meta", "articles", "risk_tier_rules", "obligation_rules", "ob
 
 
 class Bundle:
-    """A parsed, validated, content-addressed regulatory bundle."""
+    """A parsed, validated, content-addressed regulatory bundle.
+
+    The accessors cast: YAML parses to ``Any``, and ``_validate`` is what actually
+    establishes the shape. Casting at the boundary keeps ``Any`` from leaking into
+    every caller, which is the only way ``mypy --strict`` says anything useful about
+    the engine downstream.
+    """
 
     def __init__(self, content: dict[str, Any]) -> None:
         self.content = content
@@ -33,27 +39,27 @@ class Bundle:
 
     @property
     def version(self) -> str:
-        return self.content["meta"]["version"]
+        return cast(str, self.content["meta"]["version"])
 
     @property
     def meta(self) -> dict[str, Any]:
-        return self.content["meta"]
+        return cast(dict[str, Any], self.content["meta"])
 
     @property
     def risk_tier_rules(self) -> list[dict[str, Any]]:
-        return self.content["risk_tier_rules"]
+        return cast(list[dict[str, Any]], self.content["risk_tier_rules"])
 
     @property
     def obligation_rules(self) -> list[dict[str, Any]]:
-        return self.content["obligation_rules"]
+        return cast(list[dict[str, Any]], self.content["obligation_rules"])
 
     @property
     def obligations(self) -> dict[str, dict[str, str]]:
-        return self.content["obligations"]
+        return cast(dict[str, dict[str, str]], self.content["obligations"])
 
     @property
     def articles(self) -> dict[str, str]:
-        return self.content["articles"]
+        return cast(dict[str, str], self.content["articles"])
 
     def _validate(self) -> None:
         missing = [key for key in _REQUIRED_KEYS if key not in self.content]

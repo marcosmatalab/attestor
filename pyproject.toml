@@ -42,8 +42,13 @@ dependencies = [
 # accident.
 dev = [
     "pytest==9.1.1",
+    "pytest-cov==7.1.0",
     "httpx==0.28.1",
     "ruff==0.16.8",
+    "mypy==2.3.1",
+    "vulture==2.16",
+    "types-PyYAML==6.0.12.20260906",
+    "types-reportlab==5.0.0.20260911",
 ]
 
 [project.scripts]
@@ -62,6 +67,19 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "C4", "SIM"]
 
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src/attestor"]
+
+[[tool.mypy.overrides]]
+# c2pa-python ships no py.typed marker and no stubs. Everything this repo does with
+# it is wrapped in attestor.provenance, whose own surface is fully typed.
+module = ["c2pa.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q"
+# The threshold sits at 95, two points below the 97 measured today, so a legitimate
+# refactor has room and a real regression still trips it.
+addopts = "-q --cov=src/attestor --cov-report=term-missing --cov-fail-under=95"

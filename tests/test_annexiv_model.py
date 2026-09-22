@@ -41,7 +41,7 @@ def test_all_citations_includes_legal_basis_and_section_citations() -> None:
         bundle_sha256="deadbeef",
         classification_checksum="cafef00d",
         legal_basis=_cite("art11_technical_documentation"),
-        provisional_note="",
+        status_note="",
         sections=(
             DossierSection(
                 number="5", title="Risk", guidance="g", citations=(_cite("art9_risk_management"),)
