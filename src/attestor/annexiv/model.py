@@ -46,7 +46,11 @@ class AnnexIVDossier(BaseModel):
     bundle_sha256: str
     classification_checksum: str
     legal_basis: Citation | None  # Article 11 — the basis for this very document
-    provisional_note: str  # caveat read from the bundle meta (empty for legal text)
+    # Regulatory status of the bundle this dossier was drawn up under, read from its
+    # ``meta`` and never composed here. It was named ``provisional_note`` while the
+    # only non-empty value was a provisional caveat; once the Omnibus became law the
+    # name would have made a dossier state the opposite of the truth.
+    status_note: str
     sections: tuple[DossierSection, ...]
 
     @property

@@ -33,6 +33,13 @@ jobs:
       - name: Ruff format check
         run: ruff format --check .
 
+      - name: Mypy
+        run: mypy src/attestor
+
+      - name: Dead code
+        run: vulture src tests --min-confidence 80
+
+      # Coverage needs no step of its own: --cov-fail-under lives in addopts.
       - name: Pytest
         run: pytest
 
