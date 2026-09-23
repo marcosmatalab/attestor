@@ -62,7 +62,7 @@ def run_demo(bundle: Bundle | None = None) -> dict[str, Any]:
             source,
             dest,
             SignerConfig(cert_path=str(cert), private_key_path=str(key)),
-            ProvenanceMetadata(title="demo output", model="claude-opus-4-8"),
+            ProvenanceMetadata(title="demo output", model="example-model"),
         )
         signed_asset = dest.read_bytes()
 
