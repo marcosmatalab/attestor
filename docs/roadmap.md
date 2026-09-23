@@ -19,4 +19,4 @@
 ---
 
 Each phase has its own page; the index is in the
-[repository README](../README.md#deeper-docs).
+[repository README](../README.md#documentation).
