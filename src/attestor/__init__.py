@@ -4,4 +4,4 @@ Portfolio project (pre-alpha). Not legal advice. See README for the honesty note
 on the Digital Omnibus and on what C2PA provenance does and does not prove.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
