@@ -53,7 +53,7 @@ def test_signed_asset_roundtrips_with_expected_assertions(
     source.write_bytes(_png())
     dest = tmp_path / "out.png"
 
-    sign_asset(source, dest, config, ProvenanceMetadata(title="in.png", model="claude-opus-4-8"))
+    sign_asset(source, dest, config, ProvenanceMetadata(title="in.png", model="example-model"))
 
     report = json.loads(c2pa.Reader("image/png", io.BytesIO(dest.read_bytes())).json())
     manifest = report["manifests"][report["active_manifest"]]
@@ -74,7 +74,7 @@ def test_signed_asset_roundtrips_with_expected_assertions(
         a["data"] for a in manifest["assertions"] if a["label"] == "com.attestor.ai_disclosure"
     )
     assert disclosure["eu_ai_act_art50"] is True
-    assert disclosure["model"] == "claude-opus-4-8"
+    assert disclosure["model"] == "example-model"
 
     assert report["validation_state"] == "Valid"
 

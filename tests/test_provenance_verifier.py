@@ -54,7 +54,7 @@ def signed_png(tmp_path_factory: pytest.TempPathFactory) -> bytes:
         source,
         dest,
         SignerConfig(cert_path=str(cert), private_key_path=str(key)),
-        ProvenanceMetadata(title="in.png", model="claude-opus-4-8"),
+        ProvenanceMetadata(title="in.png", model="example-model"),
     )
     return dest.read_bytes()
 
