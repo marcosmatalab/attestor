@@ -172,11 +172,16 @@ because a badge is a number nothing re-checks.
 | | Measured | Command |
 |---|---|---|
 | Python tests | **417 passed** | `pytest` |
-| Coverage | **97%**, 1178 statements, 35 missed, gate at 95% | `pytest` |
+| Coverage | **97%**, 1178 statements, 35 missed, gate at 95% | `make test` |
 | Frontend tests | **20 passed** in 7 files | `cd web && npm test` |
 | Types | strict, **0 errors** across 36 modules | `mypy src/attestor` |
 | Dead code | **0 findings** | `vulture src tests --min-confidence 80` |
 | Lint and format | clean, pinned to `ruff==0.16.8` | `ruff check . && ruff format --check .` |
+
+Coverage is a CI gate, not a property of running one test file: bare `pytest` measures
+nothing, so each file under [Every claim](#every-claim-and-the-command-that-proves-it)
+exits 0 on its own. The floor comes from
+`make test`, i.e. `pytest --cov=src/attestor --cov-report=term-missing --cov-fail-under=95`.
 
 CI runs these through `make check`, so the Makefile and the workflow cannot drift, plus the
 frontend's eslint, build, tsc and vitest — all blocking. Tools are pinned exactly and the
