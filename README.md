@@ -1,41 +1,115 @@
 # Attestor
 
 [![CI](https://github.com/marcosmatalab/attestor/actions/workflows/ci.yml/badge.svg)](https://github.com/marcosmatalab/attestor/actions/workflows/ci.yml)
-![Python](https://img.shields.io/badge/python-3.12-blue)
-![Tests](https://img.shields.io/badge/tests-228%20passing-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-**A deterministic EU AI Act compliance engine: the classification decision is a rule engine, NOT an LLM, so the same input always yields the same output with a reproducible checksum — and everything is anchored in a cryptographic ledger a third party can verify offline.**
+**A deterministic EU AI Act compliance engine: the classification decision is a rule
+engine, NOT an LLM, so the same input always yields the same output with a reproducible
+checksum — and everything is anchored in a cryptographic ledger a third party can verify
+offline.**
 
 ![Attestor dashboard](docs/dashboard.png)
 
-> Portfolio demonstration — not legal advice, not a compliance product; every value shown is produced by the deterministic engine, not asserted by the UI.
+> The checksum in this screenshot is the one the command below reproduces, and
+> `tests/test_dashboard_capture.py` fails if it ever stops being true. Portfolio
+> demonstration, not legal advice: every value shown is produced by the deterministic
+> engine, never asserted by the UI.
 
-## What makes it different
+## Verify it in 60 seconds
 
-- **Deterministic decision, no LLM** — same input → same output, with a reproducible checksum an auditor can replicate.
-- **The ledger separates integrity from trust** — the tamper check is integrity + signature; TSA trust is a separate, fail-closed axis that never decides whether tampering occurred.
-- **Validated citations** — a regulatory reference that does not resolve is rejected; zero hallucinated references.
-- **Additive regulatory evolution** — new scenarios (the Digital Omnibus) are added without rewriting the existing golden tests, so reproducibility is preserved.
+No keys, no network, no guessing. From a clean clone:
 
----
+```bash
+pip install -e .
+
+# 1. Verify the committed ledger offline
+attestor ledger verify examples/ledger
+# ledger VERIFIED (Merkle root intact, Ed25519 signature valid)   -> exit 0
+
+# 2. Tamper with one byte and the verdict flips
+sed -i 's/sys-1/sys-9/' examples/ledger/records.json
+attestor ledger verify examples/ledger
+# ledger TAMPERED - integrity_ok=False, signature_ok=True         -> exit 1
+git checkout examples/ledger/records.json
+
+# 3. Reproduce a classification checksum, under either timeline
+attestor classify --role provider --annex-iii-area employment --checksum-only
+# d821e3e0b95d4edda4416916f2a5b02ef0296f34704a0010ee0222b3a9e0ee48   (law in force)
+attestor classify --role provider --annex-iii-area employment --bundle v2026-08 --checksum-only
+# 15815cd8f577dea7cc09696acc9a3e96870664573ea428e7c81bb8b06a84bd17   (as enacted)
+
+attestor demo                                   # 4. the whole pipeline, end to end
+```
+
+Step 2 is the one worth pausing on: `integrity_ok` goes false while `signature_ok` stays
+true. The signature covers the sealed root, so an edited record says *the evidence was
+changed after sealing* — a different accusation from *the signature is wrong*.
 
 ## What it does
 
-You register an AI system and Attestor (1) **classifies its risk** under the EU AI Act
-(prohibited / high / limited / minimal) and resolves **which obligations apply and from
-which date** — including the *Digital Omnibus* timeline; (2) **generates the Annex IV
-technical dossier** with citations **validated** against a versioned regulatory bundle (no
-hallucinated references); (3) **signs AI outputs with C2PA Content Credentials** for
-verifiable provenance (Art. 50); and (4) **anchors everything in a cryptographic ledger**
-(Ed25519 + Merkle + RFC3161) that a third party can verify **offline**.
+You describe an AI system and Attestor **classifies its risk** under the EU AI Act
+(prohibited / high / limited / minimal), resolves **which obligations apply and from which
+date**, generates the **Annex IV technical dossier** with citations validated against a
+versioned regulatory bundle, signs AI outputs with **C2PA Content Credentials** (Art. 50),
+and **anchors every artifact in a cryptographic ledger** (Ed25519 + RFC 6962 Merkle +
+RFC 3161) that a third party can verify offline.
 
----
+One caveat belongs up here rather than in a footnote: **sealing a root may reach the
+network**, because an RFC 3161 timestamp has to be fetched from a timestamping authority.
+**Verification never does** — and that is enforced, not promised:
+`tests/test_architecture.py` confines network imports to `ledger/timestamp.py` and asserts
+that no verifier imports a network client. So `grep urllib src/` finds one hit, in the one
+place a trusted timestamp cannot avoid it.
+
+## Every claim, and the command that proves it
+
+Each property this repository is sold on is a row here, with the command that checks it in
+ten seconds.
+
+| Claim | Command | Expected result |
+|---|---|---|
+| The decision is deterministic | `attestor classify --role provider --annex-iii-area employment --checksum-only`, twice | The same checksum `d821e3e0…ee48` both times |
+| No LLM anywhere in the decision | `pytest tests/test_architecture.py -k llm` | Walks the AST of every engine module; an LLM SDK import fails the build |
+| The engine never imports the API layer | `pytest tests/test_architecture.py -k api_layer` | The arrow points one way, checked rather than drawn |
+| Absorbing the Regulation changed no golden vector | `pytest tests/test_regulatory_evolution.py` | Both historical bundles still hash to their June 2026 values |
+| Checksums are anchored to literal digests | `pytest tests/test_checksum_anchors.py` | 27 committed digests, not a run compared against itself |
+| The screenshot shows what the engine produces today | `pytest tests/test_dashboard_capture.py` | The checksum stamped into the PNG equals a live `classify()` |
+| The tools the gates run are declared | `pytest tests/test_tooling_declared.py` | Parses the Makefile; an undeclared tool is exit 127 on a clean runner |
+| A third party verifies the ledger offline | `attestor ledger verify examples/ledger` | `ledger VERIFIED …`, exit 0, with no network |
+| Tampering is detected | flip a byte in `examples/ledger/records.json`, re-run | `ledger TAMPERED …`, exit 1 |
+| An untrusted signer is never reported as trusted | `attestor demo` | `integrity Valid …; signer UNTRUSTED …` — never `Valid` alone |
+| The whole suite runs with no network | `python scripts/run_offline.py` | 417 passed, every outbound connection refused |
+
+Every gate that could have been decorative was verified by breaking it on purpose:
+`import httpx` in the classifier fails the architecture test, one edited date fails nine
+checksum anchors, one line removed from the dev extra fails the tooling test, and editing
+the screenshot's sidecar fails the capture test.
+
+## Regulatory timeline: what changed, and when
+
+The Digital Omnibus on AI is **in force**: Reg. (EU) 2026/1744, adopted 29 June 2026,
+published in the OJEU on 24 July and binding since **27 July 2026**. It moves Annex III
+high-risk obligations to **2 Dec 2027** and Annex I embedded systems to **2 Aug 2028**.
+Attestor ships three bundles and shows both timelines, because knowing what changed is part
+of the answer:
+
+| Bundle | What it is | Status |
+|---|---|---|
+| `v2026-08` | Reg. (EU) 2024/1689 as originally enacted | Frozen, historical |
+| `omnibus-2026` | The Omnibus as modelled on 23 June 2026, while still a proposal | Frozen, historical |
+| `reg-2026-1744` | Reg. 2024/1689 as amended by Reg. 2026/1744 | **In force, and the default** |
+
+**The part worth reading.** Those deltas were modelled while the text was still a proposal.
+When it became law they matched, and absorbing it cost **one bundle file and one changed
+default**: no engine change, no migration, no rewritten golden vector. That is a schema
+decision rather than luck — effective dates live **on each obligation**, never as one global
+date, so an amendment moving some dates and not others is additive by construction. Full
+history: [`docs/regulatory-changelog.md`](docs/regulatory-changelog.md).
 
 ## Architecture
 
-Each node is a module that exists in the repo. The classification decision is a rule
-engine (no LLM); the HTTP/UI layer is a thin wrapper that only displays engine output.
+Each node is a module that exists in the repo. The classification decision is a rule engine
+(no LLM); the HTTP/UI layer is a thin wrapper that only displays engine output.
 
 ```mermaid
 flowchart TD
@@ -68,506 +142,107 @@ flowchart TD
     ledger ==> auditor
 ```
 
----
-
 ## Run it locally
 
-The backend is the engine plus a thin FastAPI layer; the frontend is a Next.js dashboard that
-calls it. Run them in two terminals.
-
-**1 · Backend** (Python ≥ 3.12)
-
 ```bash
-python -m venv .venv
-source .venv/bin/activate                 # Windows: .venv\Scripts\activate
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 
+attestor demo                             # the whole pipeline, no keys, no network
 uvicorn attestor.api.main:app --reload    # http://127.0.0.1:8000
-
-curl http://127.0.0.1:8000/health
-# {"status":"ok","service":"attestor","version":"0.0.1","environment":"development"}
+make check                                # every gate CI runs, in CI's order
 ```
 
-**2 · Frontend** (Node ≥ 20; built and tested on 24)
+The dashboard is a Next.js app over the same API:
 
 ```bash
-cd web
-npm install
-npm run dev                               # http://localhost:3000
+cd web && npm install && npm run dev      # http://localhost:3000
+make web                                  # lint, build, typecheck, vitest
 ```
 
-The dashboard calls the API at `http://127.0.0.1:8000` by default. To point it elsewhere, set
-`NEXT_PUBLIC_API_BASE_URL` (read in [`web/lib/api.ts`](web/lib/api.ts)):
-
-```bash
-NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000 npm run dev
-```
-
-**Checks** (all green before any commit)
-
-```bash
-ruff check . && ruff format --check . && pytest   # engine
-cd web && npm run lint && npm run build           # dashboard
-```
-
-Configuration is read from environment variables / a local `.env` (see
-[`.env.example`](.env.example)).
-
----
-
-## Roadmap
-
-| Phase  | Deliverable | Status |
-|--------|-------------|--------|
-| **F0** | Scaffold: repo, package, FastAPI `/health`, CI (ruff + pytest) | ✅ |
-| **F1** | Deterministic rule engine + bundle `v2026-08` (**legal-text dates**) + golden tests asserting **risk *and* effective dates**. Self-consistent on its own. | ✅ |
-| **F2** | **Additive:** scenario bundles + timeline resolution presenting **both** dates (as enacted vs as amended), with the status caveat read from the bundle `meta`. *No rewrite of F1 goldens — not when the Omnibus was a proposal, and not when it became law.* | ✅ |
-| **F3** | Annex IV generator + **validated citations** (a citation that doesn't resolve is rejected) + PDF export | ✅ |
-| **F4** | C2PA signer: X.509 manifest + optional RFC3161 timestamp. Keys are config-driven and sign inside a `Signer.from_callback` seam, the same interface a KMS/HSM signer plugs into. No KMS backend is implemented. | ✅ |
-| **F5** | C2PA verifier — reports signer + assertions + the provenance **nuance** | ✅ |
-| **F6** | Ledger Ed25519 + Merkle + RFC3161, **offline** verification via CLI | ✅ |
-| **F7** | Governance: ISO/IEC 42001 mapping + FRIA (Art. 27) + Art. 12 logs | ✅ |
-| **F8** | Dashboard (Next.js) + polish + demo | ✅ |
-
-> **Bundle schema note (F1 design constraint):** effective dates are stored
-> **per obligation**, not as a single global date — so F2 can add the Omnibus
-> scenario *additively* without migrating the format or rewriting golden vectors.
-
----
-
-## Classifier (F1)
-
-The classification *decision* is a rule engine over a versioned bundle — no LLM,
-no randomness, no clock — so the same input and bundle always yield the same
-output, with a content-addressed `checksum` an auditor can reproduce.
-
-```python
-from attestor.classifier import SystemProfile, classify, load_bundle
-
-bundle = load_bundle("v2026-08")  # legal-text scenario
-profile = SystemProfile(role="provider", annex_iii_area="employment")
-result = classify(profile, bundle)
-
-result.risk  # RiskTier.high
-result.effective_dates["art9_risk_management"]  # "2026-08-02"
-result.checksum  # sha256 over canonical(input + bundle + result)
-```
-
-**How it works.** A bundle holds (1) `risk_tier_rules` evaluated in order —
-*order is precedence* — to pick the headline tier; (2) `obligation_rules` that
-each emit one obligation *with its own effective date on the rule* (so the same
-article can become applicable on different dates via different pathways, e.g.
-Annex III `2026-08-02` vs Annex I embedded `2027-08-02`); and (3) an `articles`
-index every obligation reference must resolve in (the contract the F3 citation
-validator relies on). GPAI (Arts 51–55) is a **transversal** track, not a fourth
-tier — it can coexist with any risk tier.
-
-### F1 scope & simplifications (deliberate, documented)
-
-- **No Art. 6(3) derogation.** The `high_annex_iii` rule treats **every** Annex III
-  system as high-risk; it does **not** yet apply the Art. 6(3) filter (an Annex III
-  system that does not pose a significant risk of harm is not high-risk). The rule
-  ordering is precedence-based, so a future `high_risk_derogation_6_3` rule can be
-  inserted **above** `high_annex_iii` without touching anything below it.
-- **Art. 49 registration** is modelled for all Annex III provider systems without
-  the point-2 / Art. 6(3) refinements.
-- **`content_lifecycle`** (new vs legacy synthetic content) is captured on the
-  input but is **date-neutral** in F1: under the pure legal text all of Art. 50 is
-  `2026-08-02`. The legacy-marking transition (`2026-12-02`) is a Digital Omnibus
-  delta and lands in F2.
-
----
-
-## Dual scenario — as enacted vs as amended (F2)
-
-Attestor does not silently swap one timeline for another — it shows **both**.
-`compare_timelines` classifies one profile under each bundle and reports, per
-obligation, the date under the Regulation as originally enacted and the date under
-the Regulation as it binds today.
-
-```python
-from attestor.classifier import SystemProfile, compare_timelines
-
-cmp = compare_timelines(SystemProfile(role="provider", annex_iii_area="employment"))
-cmp.legal_text_risk  # high
-[(o.reference, str(o.legal_text_date), str(o.omnibus_date)) for o in cmp.divergences]
-# e.g. ("Art. 9", "2026-08-02", "2027-12-02") — high-risk deferred 16 months
-cmp.omnibus_status  # the status caveat, read from the binding bundle meta
-```
-
-Each scenario bundle is a **complete, self-contained, content-hashable** unit (not a
-diff), carrying only four deltas vs the text as enacted: Annex III high-risk →
-`2027-12-02`, Annex I embedded → `2028-08-02`, the Art. 50(2) new/legacy marking
-split, and a **new Art. 5 prohibition** (NCII/nudifiers + CSAM, `2026-12-02`, with a
-safe harbour). The status caveat lives only in the bundle's `meta.status_note`
-(single source of truth) — `compare_timelines` reads it, never hardcodes it.
-
-**That design was tested by reality.** Those four deltas were modelled on 23 June
-2026, while the Omnibus was a proposal. It became law on 27 July 2026, all four
-matched, and absorbing it cost one new bundle file and one changed default — no
-migration, no engine change, no rewritten golden vector. Because effective dates
-live **on each obligation** rather than as one global date on the bundle, an
-amendment that moves some dates and not others is additive by construction.
-Full history: [`docs/regulatory-changelog.md`](docs/regulatory-changelog.md).
-
----
-
-## Annex IV technical-documentation dossier (F3)
-
-The dossier is a **traceable scaffold generated from the classification** — not
-free text. Every structured citation is the `reference` of an obligation the
-classifier emitted; nothing is asserted.
-
-```python
-from attestor.annexiv import generate_dossier, validate_citations, render_pdf
-from attestor.classifier import SystemProfile, classify, load_bundle
-
-bundle = load_bundle("v2026-08")
-profile = SystemProfile(role="provider", annex_iii_area="employment")
-dossier = generate_dossier(profile, classify(profile, bundle), bundle)
-
-validate_citations(dossier, classify(profile, bundle), bundle)  # fail-closed, or raises
-pdf_bytes = render_pdf(dossier)  # deterministic (reportlab)
-```
-
-- **Provider-only, high-risk only.** Annex IV is a provider obligation (Art. 11);
-  the generator rejects deployers and non-high-risk systems with a specific error.
-- **Fail-closed validator, 3 checks:** every citation (a) resolves to an article in
-  the bundle, (b) traces to a classifier obligation (no orphans), and (c) together
-  cover every classification obligation (completeness). Each has its own message.
-- **Deterministic:** same profile + classification + bundle → identical dossier
-  model (pinned by golden vectors); the PDF renders byte-identically via reportlab's
-  invariant mode.
-
-### What "validated" means, and what this is not (honesty)
-
-- **"Validated"** means the citation *resolves to the bundle* **and** *traces to an
-  obligation the classifier emitted* — **not** that the article substantiates an
-  arbitrary claim.
-- The dossier is a **scaffold**: it tells you which Annex IV sections to complete
-  and which obligations/articles/dates apply. It does **not** write your technical
-  documentation (that needs real system data → sections carry explicit placeholders).
-- The **obligation → section placement is a defensible structuring** based on what
-  each Annex IV point covers — **not** a mapping the Regulation prescribes.
-- The bundle models a **representative subset** of the high-risk obligations, not the
-  exhaustive list: e.g. Section 9 (Art. 72 post-market monitoring) is guidance with no
-  derived citation, and Arts 18/19/20 are not yet modelled.
-
----
-
-## C2PA content provenance — signer (F4)
-
-Signs an AI output with a C2PA manifest (Content Credentials) carrying an
-AI-generated marking (`c2pa.actions.v2` + the IPTC `trainedAlgorithmicMedia`
-source type) and an Attestor disclosure assertion. Built on `c2pa-python==0.36.0`.
-
-```python
-from attestor.provenance import ProvenanceMetadata, SignerConfig, generate_dev_cert, sign_asset
-
-generate_dev_cert("dev_chain.pem", "dev_key.pem")  # dev only — never commit
-config = SignerConfig(cert_path="dev_chain.pem", private_key_path="dev_key.pem")
-sign_asset(
-    "input.png",
-    "signed.png",
-    config,
-    ProvenanceMetadata(title="input.png", model="claude-opus-4-8"),
-)
-```
-
-- **Signing via `Signer.from_callback`** — the key signs inside a callback, which is
-  the seam a KMS/HSM signer would plug into. Swapping the callback is the whole change
-  such an integration would need; **no KMS backend ships here.** ES256 (EC P-256).
-- **RFC3161 timestamp** is optional (`RFC3161_TSA_URL`): when set, the TSA
-  countersignature gives the C2PA claim an AdES "T"-level trusted time, linking to
-  the F6 ledger. Without it, signing is fully offline.
-- **Keys are config-driven**, never hardcoded or committed. The dev certificate is
-  a self-signed **leaf + Root CA chain** (c2pa-rs rejects a lone self-signed cert).
-
-### What C2PA proves, and what this is not (honesty)
-
-- **C2PA proves PROVENANCE and INTEGRITY, not truth.** A valid Content Credential
-  shows the manifest is intact and identifies the signer — it does **not** assert
-  the content is real. **Absence** of a credential does **not** mean AI-generated;
-  **presence** does not mean the content is authentic.
-- **C2PA does not require declaring AI origin.** A validly signed asset may omit the
-  `digitalSourceType` entirely. Attestor *chooses* to include the disclosure (in
-  service of **Art. 50** of Reg. (EU) 2024/1689) — its presence is Attestor's choice,
-  not something C2PA imposes.
-- **The dev signer is an untrusted, self-signed certificate** — **not** on any C2PA
-  trust list. A verifier marks the signer as untrusted; that trust nuance (and the
-  verifier itself) is **F5**, below.
-
----
-
-## C2PA content provenance — verifier (F5)
-
-Reads a (possibly signed) asset and reports its provenance as **two independent
-dimensions** — integrity and signer trust — that must never be conflated. Built on
-the same `c2pa-python==0.36.0`.
-
-```python
-from attestor.provenance import verify_asset
-
-report = verify_asset("signed.png")
-report.validation_state  # "Valid" — manifest intact, claim well-formed
-report.integrity_ok  # True
-report.trusted  # False — the signer is NOT on any trust list
-report.trust_reason  # "signingCredential.untrusted: ... not on any configured trust list"
-report.headline  # "integrity Valid (...); signer UNTRUSTED — ..."
-```
-
-- **Integrity** (`validation_state`) answers "is the manifest intact and the claim
-  well-formed?" — verified by the C2PA hashes and the claim signature.
-- **Trust** (`trusted` / `trust_reason`) answers, **separately**, "is the *signer*
-  recognised?" — derived from the `signingCredential.*` validation code, fail-closed
-  (untrusted unless a trust anchor is configured and the chain validates against it).
-- Verification is **deterministic**: identical bytes always produce an identical
-  report (the report keeps validation **codes** but not the per-signature URN urls).
-- An **unsigned** asset yields `has_manifest=False` without raising; **tampering** with
-  a signed asset flips `validation_state` to `"Invalid"`.
-
-### Why "Valid" is not "trusted" (honesty)
-
-- **`validation_state == "Valid"` means the manifest is intact and the claim is
-  well-formed — it does NOT mean the signer is trusted.** These are different
-  questions with different answers.
-- The proof is concrete: Attestor's dev-signed asset is `"Valid"` **and** carries a
-  `signingCredential.untrusted` entry in the validation *failure* list **at the same
-  time**. Attestor reports both, and the `headline` never states "Valid" on its own.
-- **The dev signer is untrusted** because its CA is on no C2PA trust list. A real
-  deployment signs with a certificate from a **recognised CA** and configures the
-  verifier's trust anchors — at which point the same code reports `trusted=True`.
-  Configuring the trust list is a deployment concern; F5 ships none.
-- **Absence** of a credential does not mean content is non-AI; **presence** of a valid
-  credential does not make the source trusted; and the **AI disclosure is voluntary**
-  (C2PA does not require it).
-
----
-
-## Cryptographic ledger — offline-verifiable (F6)
-
-An **append-only log** of records (a dossier hash, a C2PA manifest hash, …). Each
-record is hashed with the **same `canonical.py`** the classifier checksums with, the
-leaves form a deterministic **RFC 6962 Merkle tree**, and the root is signed with
-**Ed25519**. The signed root can optionally be **timestamped (RFC 3161)**. A third party
-verifies everything **offline** — with only public artifacts, no private key and no
-network.
-
-```python
-from attestor.ledger import Ledger, generate_ledger_key, load_private_key, save_ledger
-
-generate_ledger_key("ledger.key")  # dev only — never commit; the path is config-driven
-key = load_private_key("ledger.key")
-
-ledger = Ledger()
-ledger.append({"type": "dossier", "id": "sys-1", "sha256": "…"})
-ledger.append({"type": "c2pa", "id": "img-1", "sha256": "…"})
-
-signed = ledger.seal(key)  # Merkle root + Ed25519 signature (deterministic)
-save_ledger("out/ledger", ledger.records, signed)
-```
-
-A ledger produced that way ships with the repository, so you can check the claim
-before writing any of the above:
-
-```bash
-# Offline verifier — public artifacts only (records.json, signed_root.json, optional tsa/*.pem)
-attestor ledger verify examples/ledger
-# ledger VERIFIED (Merkle root intact, Ed25519 signature valid); no timestamp
-# exit 0
-
-# Edit one byte and the verdict flips, while the signature still checks out
-sed -i 's/sys-1/sys-9/' examples/ledger/records.json
-attestor ledger verify examples/ledger
-# ledger TAMPERED - integrity_ok=False, signature_ok=True
-# exit 1
-git checkout examples/ledger/records.json
-```
-
-`python -m attestor.ledger <dir>` is the same verifier without installing the
-package. Exit codes are the interface: `0` verified, `1` tampered, `2` usage or I/O
-error — and TSA trust never moves them.
-
-- **Deterministic.** Same records + same key → same Merkle root and same Ed25519
-  signature (RFC 8032). The RFC 3161 token is *not* byte-reproducible (it depends on the
-  TSA and the time), so it is verified, never byte-compared.
-- **Inclusion proofs.** Given a record, the ledger emits an RFC 6962 audit path so a
-  third party can verify membership **without** the whole tree.
-- **Offline by construction.** Verification needs the public key, the signed root, the
-  records (or an inclusion proof), and — for the timestamp — the TSA certificates. If it
-  needed the private key or the network, the "offline" claim would be hollow.
-
-### What the ledger proves, and what this is not (honesty)
-
-- **It is an append-only log with cryptographic integrity — NOT a blockchain.** There is
-  no distribution and no consensus; the operator holds the signing key. It gives
-  third parties offline-verifiable integrity and existence evidence, nothing more.
-- **The value, and its limit.** Once a root is **signed *and* timestamped**, altering
-  the entries beneath it without detection is infeasible, and its existence at time *T*
-  is demonstrable. **But** the operator can still fork or rewrite history that has **not
-  yet been anchored** — the security depends on signing, timestamping, and ideally
-  publishing roots **regularly**. Anchoring is a discipline, not a one-off.
-- **Ed25519 ≠ legal identity.** The signature proves the root was signed by the holder
-  of the key (authenticity and integrity of the root), not *who* in any legal sense.
-- **RFC 3161 trust is a separate axis.** A timestamp proves existence-in-time **only by
-  trusting the TSA**. A free/dev TSA can issue a perfectly valid token yet not be a
-  recognised authority — so the verifier reports `tsa_trusted` **separately** and never
-  lets an untrusted TSA look like a tampered ledger (the same integrity-vs-trust split as
-  C2PA in F5). The exit code is driven by integrity and signature alone.
-
----
-
-## Governance artifacts — crosswalk, FRIA scaffold, Art. 12 logs (F7)
-
-Three **deterministic** artifacts derived from the classification that **help address**
-governance obligations. Read the honesty limits below carefully: none of them is an
-audit, certification, completed assessment, or statement of conformity.
-
-```python
-from attestor.classifier import SystemProfile, classify, load_bundle
-from attestor.governance import (
-    Art12Event,
-    Art12EventType,
-    Art12Log,
-    derive_crosswalk,
-    generate_fria,
-)
-
-bundle = load_bundle("v2026-08")
-profile = SystemProfile(role="deployer", deployer_type="public_body", annex_iii_area="employment")
-classification = classify(profile, bundle)
-
-crosswalk = derive_crosswalk(classification)  # AI Act obligation → ISO/IEC 42001 clauses + Annex A
-fria = generate_fria(
-    profile, classification
-)  # Art. 27(1)(a)–(f) scaffold (raises if FRIA doesn't apply)
-
-log = Art12Log()
-log.record(
-    Art12Event(event_type=Art12EventType.risk_situation, occurred_at="2026-08-03T10:00:00+00:00")
-)
-signed = log.seal(ledger_key)  # tamper-evident, offline-verifiable via the F6 ledger
-```
-
-- **ISO/IEC 42001 crosswalk.** For each applied AI Act obligation it points to the related
-  ISO/IEC 42001:2023 clauses (4–10) and Annex A control groups (A.2–A.10). A defensible
-  design map (like the F3 obligation→section map), built only from obligations actually
-  emitted; AI-Act-specific procedures with no clean 42001 analogue are omitted, not stretched.
-- **FRIA scaffold (Art. 27).** Derived from a deployer classification, **gated** on the
-  classifier's `art27_fria` decision (it raises if the FRIA does not apply). It enumerates
-  Art. 27(1)(a)–(f) with explicit `[TO BE COMPLETED]` placeholders.
-- **Art. 12 audit log.** Typed events for what Art. 12(2)/(3) require, recorded into the F6
-  ledger so the log is tamper-evident and offline-verifiable — altering an event breaks
-  verification.
-
-### What these are, and what they are not (honesty)
-
-- **Crosswalk, not audit.** The ISO/IEC 42001 mapping is a **reference crosswalk** to locate
-  relevant clauses/controls — **not** an audit, certification, gap assessment, or statement
-  of conformity. It cites only clause/control **identifiers** and short group headings; it
-  reproduces **no normative text** (ISO/IEC 42001 is a paid standard). The Annex A numbering
-  is pinned to ISO/IEC 42001:2023 (A.5–A.10), which several secondary sources get wrong.
-- **Scaffold, not a completed FRIA.** Applicability is decided by the classifier, not
-  re-litigated here; the output is a structure to be filled in after substantive analysis.
-  Generating it neither constitutes nor substitutes for the assessment.
-- **Capability, not conformity.** An Art. 12 logging capability is **necessary but not
-  sufficient** for Art. 12 conformity. Recording events — even tamper-evidently — does not by
-  itself make a system compliant.
-
----
-
-## Dashboard and HTTP API (F8)
-
-A **thin presentation layer** over the engine: a FastAPI surface and a Next.js 16 dashboard.
-There is **zero compliance logic** in either — every figure, date, checksum, and verdict comes
-from F1–F7, which remain the single source of truth.
-
-- **`/api` endpoints** are thin wrappers: `POST /api/classify`, `/api/timeline` (dual dates),
-  `/api/annex-iv` (+ `/pdf`), `/api/governance/crosswalk`, `/api/governance/fria`,
-  `/api/provenance/verify`, `/api/ledger/verify`, and `/api/demo/run`. Gated engine errors
-  surface as HTTP 422 with the engine's own message; computed properties (`headline`,
-  `effective_dates`) are serialized verbatim — never reimplemented in the API.
-- **The decisive test:** each endpoint's response is compared to a direct engine call (identical
-  checksum, identical report) — the proof that nothing is mocked or hardcoded.
-- **The dashboard** (`web/`) renders those outputs verbatim: the risk badge and reproducible
-  checksum, the dual legal-text vs Omnibus timeline with the provisional caveat, the Annex IV
-  scaffold, the ISO/IEC 42001 crosswalk, the FRIA scaffold, and the C2PA + ledger verification.
-
-### End-to-end demo
-
-`POST /api/demo/run` (the **End-to-end demo** page) runs one example **high-risk provider** path
-live: classify → Annex IV → sign an AI output (C2PA) → verify → anchor in the ledger → verify the
-ledger offline. Signing and sealing use **ephemeral dev keys** generated per request (never
-committed), so the C2PA signer is honestly **untrusted** and the ledger still verifies offline.
-
-### UI honesty (no overselling)
-
-- A persistent banner: a portfolio demonstration, not legal advice or a compliance product. The
-  words "compliant" / "certified" / "verified" never stand alone.
-- **Dual dates always**, with the Omnibus "pending adoption" caveat — never a single date as "the"
-  date.
-- **"Validated"** is shown to mean a citation *resolves and traces* to an emitted obligation, not
-  that it substantiates a claim.
-- **C2PA** uses the F5 headline verbatim: "integrity Valid" never appears without the trust
-  qualifier, and the dev signer is reported **UNTRUSTED**.
-- **The ledger** is described as an append-only log verifiable offline — **not a blockchain**.
-
----
+It calls `http://127.0.0.1:8000` by default; `NEXT_PUBLIC_API_BASE_URL` points it elsewhere
+and `CORS_ORIGINS` tells the backend which origins to accept. Config comes from the
+environment or a local `.env` — see [`.env.example`](.env.example), where every variable is
+one the code actually reads.
+
+## Engineering
+
+Every figure has the command that produces it next to it. None is typed into a badge,
+because a badge is a number nothing re-checks.
+
+| | Measured | Command |
+|---|---|---|
+| Python tests | **417 passed** | `pytest` |
+| Coverage | **97%**, 1178 statements, 35 missed, gate at 95% | `pytest` |
+| Frontend tests | **20 passed** in 7 files | `cd web && npm test` |
+| Types | strict, **0 errors** across 36 modules | `mypy src/attestor` |
+| Dead code | **0 findings** | `vulture src tests --min-confidence 80` |
+| Lint and format | clean, pinned to `ruff==0.16.8` | `ruff check . && ruff format --check .` |
+
+CI runs these through `make check`, so the Makefile and the workflow cannot drift, plus the
+frontend's eslint, build, tsc and vitest — all blocking. Tools are pinned exactly and the
+Actions to commit SHAs: a range is what broke this CI once already, when ruff 0.16 began
+formatting Markdown code blocks and the gate went red on its own.
+
+## What this is not
+
+A **portfolio project**, built to demonstrate engineering across AI governance, cryptography
+and compliance. These limits are the specification, not an apology:
+
+- **Not legal advice.** Compliance *support and evidence*, for human review. The
+  interpretation lives in a versioned bundle, never hardcoded.
+- **C2PA proves provenance, not truth.** A valid credential shows the manifest is intact and
+  identifies the signer — **integrity is not trust**, a `"Valid"` state says nothing about
+  whether the signer is recognised, and neither asserts the content is accurate. The
+  **absence** of a credential does not mean content was AI-generated.
+- **The ledger is an append-only log, not a blockchain.** Offline-verifiable integrity
+  and existence proofs, but not distributed and with no consensus: the operator holds the
+  key and can still rewrite history that is not yet signed and timestamped.
+- **RFC 3161 tokens are checked, TSA trust is not granted.** No recognised-authority list
+  ships, so a cryptographically valid token from a free TSA is reported untrusted. It never
+  changes the tamper verdict or the exit code.
+- **Governance artifacts help; they do not certify.** The ISO/IEC 42001 mapping is a
+  reference crosswalk (IDs, no normative text), the FRIA is a scaffold for the deployer to
+  complete, and the Art. 12 log is a capability — necessary, not sufficient, for conformity.
+- **No KMS backend, and no database.** The signing seam exists; the integration does not.
+  Nothing in the engine persists state.
+
+## Deeper docs
+
+| Document | What it covers |
+|---|---|
+| [`docs/classifier.md`](docs/classifier.md) | The rule engine, the bundle schema, the deliberate simplifications |
+| [`docs/timeline.md`](docs/timeline.md), [`docs/regulatory-changelog.md`](docs/regulatory-changelog.md) | Comparing scenarios; how the law changed and how the bundles absorbed it |
+| [`docs/annex-iv.md`](docs/annex-iv.md) | The dossier, and what a validated citation does and does not mean |
+| [`docs/provenance.md`](docs/provenance.md) | C2PA signing and verification, and the integrity/trust split |
+| [`docs/ledger.md`](docs/ledger.md) | Merkle, Ed25519, RFC 3161, and what each one proves |
+| [`docs/governance.md`](docs/governance.md) | 42001 crosswalk, FRIA scaffold, Art. 12 logs |
+| [`docs/api.md`](docs/api.md), [`docs/roadmap.md`](docs/roadmap.md) | The endpoints and the dashboard; what each build phase delivered |
+| [`docs/README.md`](docs/README.md) | How the screenshot above is captured, and why it cannot go stale |
 
 ## Stack
 
 | Layer | Technology |
-|-------|------------|
-| Classifier | Python deterministic rule engine (no LLM in the decision), versioned YAML/JSON bundle |
-| Annex IV | Deterministic template derived from the classification, no LLM. Citations validated against the bundle |
-| C2PA | `c2pa-python` (`Builder` to sign, `Reader` to verify) |
-| C2PA keys | Local PEM chain + key, read from config. `Signer.from_callback` is the seam a KMS/HSM signer would plug into; no KMS backend ships here |
-| Timestamp | RFC3161 TSA (AdES "T" level) |
-| Ledger | Ed25519 (`cryptography`) + custom Merkle tree + RFC3161 |
-| Governance | ISO/IEC 42001 reference crosswalk + FRIA (Art. 27) scaffold + Art. 12 logs |
-| HTTP API | FastAPI — thin `/api` wrappers over the engine (no compliance logic) |
-| Frontend | Next.js 16 (App Router, React 19) — questionnaire, results, end-to-end demo |
-| PDF | Annex IV dossier + evidence export |
+|---|---|
+| Classifier and Annex IV | Deterministic Python rule engine over versioned YAML bundles. No LLM in the decision or the dossier; citations validated against the bundle |
+| C2PA | `c2pa-python` (`Builder`, `Reader`); local PEM chain read from config, signing through a `Signer.from_callback` seam — no KMS backend ships here |
+| Ledger and timestamp | Ed25519 + an RFC 6962 Merkle tree (`cryptography`), and `rfc3161-client` for tokens |
+| Governance | ISO/IEC 42001 crosswalk, FRIA (Art. 27) scaffold, Art. 12 logs |
+| API and frontend | FastAPI thin wrappers; Next.js 16 (App Router, React 19) dashboard |
+| PDF | reportlab in invariant mode, so a dossier renders byte-identically |
 
----
+## Provenance
 
-## Honesty / scope
-
-This is a **portfolio project**, built to demonstrate engineering across AI
-governance, cryptography, and compliance. Read these limits as features, not
-disclaimers — knowing them is the difference between a junior and a senior take:
-
-- **Not legal advice.** Attestor is compliance *support and evidence*, designed
-  for **human review**. Regulatory interpretation lives in a *versioned bundle*,
-  not hardcoded, and anything provisional is flagged as such.
-- **The Digital Omnibus is in force.** Regulation (EU) 2026/1744 was adopted by the
-  Council on **29 June 2026**, published in the OJEU on **24 July 2026** and
-  **entered into force on 27 July 2026**, amending Reg. (EU) 2024/1689: Annex III
-  high-risk moves to **2 Dec 2027**, Annex I embedded to **2 Aug 2028**. Attestor
-  still shows **both** timelines, because knowing what changed is part of the answer:
-  bundle `v2026-08` is the Regulation as originally enacted, and bundle
-  `reg-2026-1744` is the binding timeline today (and the default). The bundle
-  `omnibus-2026`, modelled on 23 June 2026 while the Omnibus was still a proposal, is
-  kept **frozen**: its four deltas matched the adopted text, and absorbing the
-  adoption required no change to a single golden vector. See
-  [`docs/regulatory-changelog.md`](docs/regulatory-changelog.md), and run
-  `pytest tests/test_regulatory_evolution.py` to check it.
-- **C2PA proves provenance, not truth.** A valid Content Credential shows the
-  manifest is intact and identifies the signer — **integrity is not trust** (a
-  `"Valid"` state says nothing about whether the signer is recognised), and neither
-  asserts the content is accurate. The **absence** of a credential does **not** mean
-  content was AI-generated.
-- **The ledger is an append-only log, not a blockchain.** It gives third parties
-  offline-verifiable integrity and existence proofs, but it is not distributed and has
-  no consensus: the operator holds the key and can still rewrite history that has not
-  yet been signed and timestamped. Its guarantees follow from anchoring roots regularly,
-  and timestamp trust depends on the TSA (reported separately from tampering).
-- **Governance artifacts help; they do not certify.** The ISO/IEC 42001 mapping is a
-  reference crosswalk (IDs, no normative text), the FRIA is a scaffold to be completed by
-  the deployer, and the Art. 12 log is a capability — necessary, not sufficient, for
-  conformity. None is an audit, certification, completed assessment, or conformity statement.
-
----
+Built over four days in June 2026 (82 commits, 16 PRs) and reworked in September 2026, when
+the Digital Omnibus became law: the rework added a bundle and changed no golden vector. I
+used AI assistance to write code and documentation. The design decisions are mine, and they
+are the ones I would defend in an interview: storing effective dates per obligation rather
+than as one global date, which is why a regulation entering into force was absorbed by
+adding a file instead of rewriting the engine; keeping integrity and trust as two separate
+axes in both C2PA and RFC3161, so an unrecognised signer never looks like a tampered file;
+and excluding default-valued fields from the canonical form, so adding questions to the
+questionnaire does not change the checksum of older inputs. The engine calls no LLM, and a
+test enforces it.
 
 ## License
 

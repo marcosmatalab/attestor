@@ -20,6 +20,13 @@ class Settings(BaseSettings):
     app_env: str = "development"
     log_level: str = "INFO"
 
+    # Browser origins allowed to call the API, comma separated. The default is the local
+    # Next.js dev server and nothing else. It is configurable because it was hardcoded,
+    # and a hardcoded origin means the capture harness - which runs the frontend on a
+    # port that cannot collide with a dev server - got a 400 on the preflight instead of
+    # a screenshot. A list that must change per environment belongs in config.
+    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+
     # C2PA provenance signing (F4). Paths to a PEM certificate chain (leaf + CA) and
     # the leaf private key. NEVER hardcoded or committed; with both unset a
     # self-signed dev chain is generated, which is why the repo signs with no keys.
