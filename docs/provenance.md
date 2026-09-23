@@ -13,7 +13,7 @@ sign_asset(
     "input.png",
     "signed.png",
     config,
-    ProvenanceMetadata(title="input.png", model="claude-opus-4-8"),
+    ProvenanceMetadata(title="input.png", model="example-model"),
 )
 ```
 

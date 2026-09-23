@@ -6,7 +6,7 @@ from attestor.provenance.manifest import TRAINED_ALGORITHMIC_MEDIA
 
 
 def test_manifest_has_the_expected_assertions() -> None:
-    manifest = build_manifest(ProvenanceMetadata(title="x.png", model="claude-opus-4-8"))
+    manifest = build_manifest(ProvenanceMetadata(title="x.png", model="example-model"))
 
     assert manifest["claim_generator_info"] == [{"name": "attestor", "version": __version__}]
     labels = [a["label"] for a in manifest["assertions"]]
@@ -20,7 +20,7 @@ def test_manifest_has_the_expected_assertions() -> None:
     disclosure = manifest["assertions"][1]["data"]
     assert disclosure["ai_generated"] is True
     assert disclosure["eu_ai_act_art50"] is True
-    assert disclosure["model"] == "claude-opus-4-8"
+    assert disclosure["model"] == "example-model"
 
 
 def test_non_ai_manifest_omits_the_digital_source_type() -> None:
