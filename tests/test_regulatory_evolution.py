@@ -1,10 +1,12 @@
-"""The Digital Omnibus became law, and absorbing it broke nothing.
+"""The Digital Omnibus became law, and absorbing it left every earlier bundle intact.
 
 This is the test that makes the repository's design claim checkable rather than
 rhetorical. Effective dates live **on each obligation**, not as one global date on
-the bundle, so a real change in EU law was absorbed by adding one bundle file.
-Nothing was migrated, no engine logic changed, and not one historical artifact
-moved by a byte.
+the bundle, so a real change in EU law was absorbed by adding a bundle rather
+than editing one. Nothing was migrated and not one historical artifact moved by a
+byte. (The same commit, 66ec7c9, did make small engine edits - the timeline's
+comparison target and an Annex IV field name; tests/test_claims_match_history.py
+keeps the docs honest about that.)
 
 Four assertions, each guarding a different way that could quietly stop being true:
 

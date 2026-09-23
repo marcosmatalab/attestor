@@ -29,7 +29,8 @@ which every claim made about it is checkable by a command.
 
 ### Changed
 
-- The default bundle moved from `omnibus-2026` to `reg-2026-1744`.
+- The default bundle moved from `v2026-08` to `reg-2026-1744`, in the engine and the API
+  (commit `66ec7c9`, 2026-09-22).
 - The README dropped from 574 lines to 249, and its depth moved into `docs/`.
 - CI runs `make check`, so the workflow and the Makefile cannot drift apart.
 
@@ -53,8 +54,11 @@ Adopted by the Council on 29 June 2026, published in the Official Journal on 24 
 2026, binding since 27 July 2026. It amends Reg. (EU) 2024/1689, moving Annex III
 high-risk obligations to 2 December 2027 and Annex I embedded systems to 2 August 2028.
 
-Absorbing it cost one new bundle file and one changed default: no engine change, no
-migration, and not one golden vector rewritten. Effective dates live on each obligation
+The repository absorbed it on 2026-09-22 (commit `66ec7c9`): the `reg-2026-1744` bundle,
+the default moved to it, and three small engine edits in the same commit (the timeline
+compares against the bundle in force; the Annex IV field `provisional_note` became
+`status_note`, and its golden followed). No rule was migrated, and the two earlier bundles
+and their classification golden vectors are unchanged. Effective dates live on each obligation
 rather than as a single global date, which is what made an amendment that moved some
 dates and not others additive by construction. The two earlier bundles are frozen and
 still hash to their June 2026 values.

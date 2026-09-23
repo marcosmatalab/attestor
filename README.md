@@ -269,7 +269,7 @@ sequenceDiagram
 | 🔁 The decision is deterministic | `attestor classify --role provider --annex-iii-area employment --checksum-only`, twice | Same checksum `d821e3e0…ee48` both times |
 | 🤖 No LLM anywhere in the decision | `pytest tests/test_architecture.py -k llm` | Walks the AST of every engine module; an LLM SDK import fails the build |
 | 🧱 The engine never imports the API layer | `pytest tests/test_architecture.py -k api_layer` | Dependencies point one way, checked by a test |
-| 📜 A new law changed no reference test case | `pytest tests/test_regulatory_evolution.py` | Both historical bundles still hash to their June 2026 values |
+| 📜 The law in force left the earlier bundles untouched | `pytest tests/test_regulatory_evolution.py` | Both historical bundles still hash to their June 2026 values |
 | ⚓ Checksums are anchored to literal digests | `pytest tests/test_checksum_anchors.py` | 27 committed SHA-256 values |
 | 🖼️ The screenshot matches the engine today | `pytest tests/test_dashboard_capture.py` | The checksum stamped into the PNG equals a live `classify()` |
 | 🧰 Every tool the gates run is declared | `pytest tests/test_tooling_declared.py` | Parses the Makefile against the `dev` extra |
@@ -284,14 +284,15 @@ fails the architecture test, one edited date fails nine checksum anchors, one li
 from the `dev` extra fails the tooling test, and editing the screenshot's sidecar fails the
 capture test.
 
-## 📅 The law changed. The engine didn't have to.
+## 📅 The law changed. The earlier versions didn't have to.
 
 ```mermaid
 timeline
     title EU AI Act: what Attestor models
     2024-07-12 : Reg. (EU) 2024/1689 published : bundle v2026-08 (as enacted)
     2026-06-23 : Digital Omnibus still a proposal : bundle omnibus-2026 modelled
-    2026-07-27 : Reg. (EU) 2026/1744 enters into force : bundle reg-2026-1744 becomes the default
+    2026-07-27 : Reg. (EU) 2026/1744 enters into force
+    2026-09-22 : bundle reg-2026-1744 added and made the default (commit 66ec7c9)
     2027-12-02 : Annex III high-risk obligations apply
     2028-08-02 : Annex I embedded high-risk obligations apply
 ```
@@ -303,8 +304,12 @@ timeline
 | `reg-2026-1744` | Reg. 2024/1689 as amended by Reg. 2026/1744 | 🟢 **In force, and the default** |
 
 The amendment was modelled while it was still a proposal. When it became law the model
-matched, and absorbing it took **one new bundle file and one changed default**: no engine
-change, no migration, no rewritten reference test case.
+matched. The repository absorbed it on **22 Sep 2026** (commit `66ec7c9`): a new bundle file,
+the default moved from `v2026-08` to it in the engine and the API, and three small engine
+edits in the same commit: the timeline now compares against the bundle in force, and the
+Annex IV field `provisional_note` became `status_note` (its one golden file followed).
+No rule was migrated, and the two earlier bundles and their classification golden vectors
+did not change by a byte.
 
 That was designed, not lucky. Effective dates live **on each obligation**, never as one
 global date, so an amendment that moves some deadlines and not others is additive by
@@ -320,7 +325,7 @@ call for an evidence system:
 | **Rule engine** instead of an LLM | Reproducible, auditable decisions | Legal interpretations are written by hand in YAML; input is a structured questionnaire | An answer that can't be recomputed identically is not evidence |
 | **Signed append-only log** instead of a blockchain | No infrastructure, no fees, one-command offline verification | One operator signs, so auditors check its key against the one it published; proof of *when* comes from RFC 3161 | An auditor needs a file to check, not a network to join |
 | **Frozen bundles** instead of editing rules | Every past answer stays exactly reproducible | A change in the law is a new bundle file, with some duplication | Editing a rule in place would make sealed answers impossible to reproduce |
-| **Deadlines per obligation** instead of one global date | Amendments that move only some dates are purely additive | More verbose bundles | This is what let the Omnibus land as a single new file |
+| **Deadlines per obligation** instead of one global date | Amendments that move only some dates are purely additive | More verbose bundles | This is what let the Omnibus land without migrating a rule or an earlier bundle |
 | **Network only when signing or sealing**, never when verifying | Anyone verifies, anywhere, offline | An RFC 3161 timestamp (ledger root or C2PA manifest) needs a call to a timestamping authority | Verification is what third parties run; signing stays on the operator's side |
 | **Integrity and signer trust** reported separately | An unknown signer is never mistaken for tampering | Two verdicts to read instead of one boolean | Merging them causes false alarms or false confidence |
 | **Default-valued fields left out** of the canonical form | New questionnaire fields don't change older checksums | A new field whose default carries meaning needs a new bundle | Old evidence keeps verifying as the questionnaire grows |
