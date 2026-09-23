@@ -2,27 +2,23 @@
 
 # 🛡️ Attestor
 
+[![CI](https://github.com/marcosmatalab/attestor/actions/workflows/ci.yml/badge.svg)](https://github.com/marcosmatalab/attestor/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/marcosmatalab/attestor?color=2563eb&label=release)](https://github.com/marcosmatalab/attestor/releases)
+[![Python](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
+[![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-16a34a)](LICENSE)
+
+[🇬🇧 English](README.md) · 🇪🇸 **Español**
+
 ### Clasificación de riesgo y evidencias de cumplimiento del Reglamento Europeo de IA, verificables por cualquiera.
 
 **Describe un sistema de IA → obtén su clase de riesgo legal, sus obligaciones y sus plazos, un
 expediente técnico del Anexo IV listo para completar y un recibo criptográfico que cualquiera puede verificar
 sin conexión.**
 
-[🇬🇧 English](README.md) · 🇪🇸 **Español**
+![Panel de Attestor](docs/dashboard.png)
 
-[![CI](https://github.com/marcosmatalab/attestor/actions/workflows/ci.yml/badge.svg)](https://github.com/marcosmatalab/attestor/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/marcosmatalab/attestor?color=2563eb&label=release)](https://github.com/marcosmatalab/attestor/releases)
-[![Python](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
-[![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-16a34a)](LICENSE)
-
-![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
-![Next.js](https://img.shields.io/badge/Next.js_16-000000?logo=nextdotjs&logoColor=white)
-![React](https://img.shields.io/badge/React_19-20232A?logo=react&logoColor=61DAFB)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
-![C2PA](https://img.shields.io/badge/C2PA-Content_Credentials-7c3aed)
-![Ed25519](https://img.shields.io/badge/Ed25519-firmas-0f766e)
-![RFC 6962](https://img.shields.io/badge/RFC_6962-%C3%A1rbol_Merkle-b45309)
-![RFC 3161](https://img.shields.io/badge/RFC_3161-sellado_de_tiempo-be123c)
+<sub>Captura real de la aplicación en ejecución. El checksum que aparece es el que
+<code>attestor classify</code> reproduce hoy, y un test hace fallar la CI si alguna vez deja de coincidir.</sub>
 
 </div>
 
@@ -37,15 +33,6 @@ sin conexión.**
 | 🔐 **Por qué es fiable** | Cada resultado lleva un **checksum reproducible** que puede sellarse en un **registro criptográfico** (árbol Merkle firmado con Ed25519, sello de tiempo RFC 3161 opcional). Un auditor lo verifica **sin conexión**, con un solo comando. |
 | 🖼️ **Además** | Firma contenido generado por IA con **C2PA Content Credentials** (el marcado legible por máquina del art. 50(2)) y relaciona el resultado con **ISO/IEC 42001**, la **evaluación de impacto en los derechos fundamentales** (FRIA, art. 27) y el registro del **art. 12**. |
 | 👥 **Para quién** | Equipos que **desarrollan** sistemas de IA (proveedores), organizaciones que los **utilizan** (responsables del despliegue, como bancos, aseguradoras o administraciones públicas) y los **auditores** que tienen que revisar a ambos. |
-
-<div align="center">
-
-![Panel de Attestor](docs/dashboard.png)
-
-<sub>Captura real de la aplicación en ejecución. El checksum que aparece es el que
-<code>attestor classify</code> reproduce hoy, y un test hace fallar la CI si alguna vez deja de coincidir.</sub>
-
-</div>
 
 ## 💡 Dicho en claro
 
