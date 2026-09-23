@@ -140,8 +140,9 @@ flowchart LR
 3. **Seal.** Records carrying the checksum, the dossier hash and the C2PA manifest hash
    become leaves of an RFC 6962 Merkle tree. The root is signed with Ed25519 and can carry
    an RFC 3161 timestamp.
-4. **Verify.** Anyone with the ledger folder runs `attestor ledger verify` with no private key
-   and no network, and gets an exit code: `0` intact, `1` tampered.
+4. **Verify.** Anyone with the ledger folder and the operator's public key runs
+   `attestor ledger verify --public-key`, with no private key and no network, and gets an
+   exit code: `0` intact, `1` tampered, `3` sealed by someone else.
 
 <details>
 <summary><b>🏛️ Full module architecture</b></summary>
@@ -210,13 +211,13 @@ No private key, no configuration, and no network after install:
 git clone https://github.com/marcosmatalab/attestor.git && cd attestor
 pip install -e ".[dev]"
 
-# 1️⃣  Verify the committed ledger offline
-attestor ledger verify examples/ledger
-# ledger VERIFIED (Merkle root intact, Ed25519 signature valid) … -> exit 0
+# 1️⃣  Verify the committed ledger offline, pinned to the key that signed it
+attestor ledger verify examples/ledger --public-key examples/ledger/public_key.pem
+# ledger VERIFIED (Merkle root intact, Ed25519 signature valid; signer pinned) … -> exit 0
 
 # 2️⃣  Change one byte of evidence and watch the verdict flip
 sed -i 's/sys-1/sys-9/' examples/ledger/records.json      # macOS: sed -i ''
-attestor ledger verify examples/ledger
+attestor ledger verify examples/ledger --public-key examples/ledger/public_key.pem
 # ledger TAMPERED - integrity_ok=False, signature_ok=True         -> exit 1
 git checkout examples/ledger/records.json
 
@@ -233,7 +234,9 @@ attestor demo
 > [!TIP]
 > In step 2, `integrity_ok` goes false while `signature_ok` stays true. The ledger tells
 > **"the evidence was changed after sealing"** apart from **"the signature does not match the root"**:
-> two different failures, reported separately.
+> two different failures, reported separately. Re-sealing edited records with another key
+> gets past both, and that is what the pin catches: `UNTRUSTED SIGNER`, exit `3`. The key's
+> fingerprint is `21ffc076…5544`; [`examples/ledger/`](examples/ledger) explains the pin.
 
 ```mermaid
 sequenceDiagram
@@ -241,15 +244,19 @@ sequenceDiagram
     participant O as 🏢 Operator
     participant L as 🔗 Ledger
     participant A as 🕵️ Auditor (offline)
+    O-->>A: publish the public key (fingerprint)
     O->>L: append evidence (checksums, dossier, C2PA hashes)
     O->>L: seal: Merkle root + Ed25519 signature (+ RFC 3161)
     L-->>A: hand over the folder
     A->>A: recompute Merkle root from records
     A->>A: check Ed25519 signature over sealed root
-    alt root matches and signature valid
-        A-->>O: ✅ VERIFIED (exit 0)
-    else any record edited after sealing
+    A->>A: compare signing key with the pinned key
+    alt any record edited after sealing
         A-->>O: ❌ TAMPERED (exit 1)
+    else re-sealed with another key
+        A-->>O: ⚠️ UNTRUSTED SIGNER (exit 3)
+    else intact and signed by the pinned key
+        A-->>O: ✅ VERIFIED (exit 0)
     end
 ```
 
@@ -266,8 +273,9 @@ sequenceDiagram
 | ⚓ Checksums are anchored to literal digests | `pytest tests/test_checksum_anchors.py` | 27 committed SHA-256 values |
 | 🖼️ The screenshot matches the engine today | `pytest tests/test_dashboard_capture.py` | The checksum stamped into the PNG equals a live `classify()` |
 | 🧰 Every tool the gates run is declared | `pytest tests/test_tooling_declared.py` | Parses the Makefile against the `dev` extra |
-| 🕵️ A third party verifies the ledger offline | `attestor ledger verify examples/ledger` | `ledger VERIFIED …`, exit 0, no network |
+| 🕵️ A third party verifies the ledger offline | `attestor ledger verify examples/ledger --public-key examples/ledger/public_key.pem` | `ledger VERIFIED …; signer pinned`, exit 0, no network |
 | 🚨 Tampering is detected | flip a byte in `examples/ledger/records.json`, re-run | `ledger TAMPERED …`, exit 1 |
+| 🔏 A ledger re-sealed with another key is caught | `pytest tests/test_ledger_signer_pinning.py` | Edit, re-seal with a fresh key, pin the original: `UNTRUSTED SIGNER`, exit 3 |
 | 🪪 Integrity and trust are reported separately | `attestor demo` | `integrity Valid …; signer UNTRUSTED …` (the demo certificate is correctly flagged as not on a trust list) |
 | 🌐 The full suite runs with no network | `python scripts/run_offline.py` | 417 passed, every outbound connection refused |
 

@@ -33,7 +33,8 @@ from attestor.classifier import (
     load_bundle,
 )
 from attestor.governance import derive_crosswalk, generate_fria
-from attestor.ledger import Ledger, SignedRoot, verify_ledger
+from attestor.ledger import Ledger, LedgerVerification, SignedRoot, verify_ledger
+from attestor.ledger.keys import public_key_hex
 from attestor.provenance import (
     ProvenanceMetadata,
     SignerConfig,
@@ -133,13 +134,18 @@ class LedgerVerifyRequest(BaseModel):
 
     records: list[dict[str, Any]]
     signed_root: SignedRoot
+    # Raw hex of the key the ledger must be signed with. Optional, like --public-key:
+    # without it only consistency is checked, and the response says so.
+    expected_public_key: str | None = None
 
 
 @router.post("/ledger/verify")
 def ledger_verify_endpoint(request: LedgerVerifyRequest) -> dict[str, Any]:
     """Verify a ledger offline from public artifacts (F6): tamper check vs TSA trust apart."""
-    result = verify_ledger(request.records, request.signed_root)
-    return _dump(result, headline=result.headline, verified=result.verified)
+    result = verify_ledger(
+        request.records, request.signed_root, expected_public_key=request.expected_public_key
+    )
+    return _ledger_dump(result)
 
 
 @router.post("/demo/run")
@@ -176,8 +182,13 @@ def demo_run_endpoint() -> dict[str, Any]:
         {"type": "annex_iv", "classification_checksum": dossier.classification_checksum},
         {"type": "c2pa_manifest", "sha256": sha256_hex(signed_asset)},
     ]
-    signed_root = Ledger(records).seal(Ed25519PrivateKey.generate())  # ephemeral key
-    ledger_result = verify_ledger(records, signed_root)
+    ledger_key = Ed25519PrivateKey.generate()  # ephemeral key
+    signed_root = Ledger(records).seal(ledger_key)
+    # The demo sealed the ledger itself, so it knows which key to expect: pin it, the
+    # way an auditor pins the operator's published key.
+    ledger_result = verify_ledger(
+        records, signed_root, expected_public_key=public_key_hex(ledger_key.public_key())
+    )
 
     return {
         "profile": profile.model_dump(mode="json"),
@@ -190,11 +201,19 @@ def demo_run_endpoint() -> dict[str, Any]:
         "ledger": {
             "records": records,
             "signed_root": signed_root.model_dump(mode="json", exclude_none=True),
-            "verification": _dump(
-                ledger_result, headline=ledger_result.headline, verified=ledger_result.verified
-            ),
+            "verification": _ledger_dump(ledger_result),
         },
     }
+
+
+def _ledger_dump(result: LedgerVerification) -> dict[str, Any]:
+    return _dump(
+        result,
+        headline=result.headline,
+        verified=result.verified,
+        tampered=result.tampered,
+        untrusted_signer=result.untrusted_signer,
+    )
 
 
 def _demo_png(

@@ -8,22 +8,24 @@ repository's central claim takes one command instead of a Python snippet:
 - ``attestor demo``          run the whole pipeline, no keys, no network.
 
 Exit codes are part of the contract, not decoration, and ``ledger verify`` keeps the
-ones ``python -m attestor.ledger`` already published: ``0`` verified, ``1`` tampered,
-``2`` usage or I/O error. A script that cannot tell "the evidence was edited" from
-"I could not read the file" is not a check. TSA trust never moves the exit code,
-for the same reason it never does in the module CLI.
+ones ``python -m attestor.ledger`` publishes: ``0`` verified, ``1`` tampered, ``2`` usage
+or I/O error, ``3`` untrusted signer (intact, but not signed by the ``--public-key``
+given). A script that cannot tell "the evidence was edited" from "I could not read the
+file" is not a check. TSA trust never moves the exit code, for the same reason it never
+does in the module CLI.
 """
 
 import argparse
 import json
 import sys
+from pathlib import Path
 from typing import Any
 
 from attestor import __version__
 from attestor.classifier import SystemProfile, classify, load_bundle
 from attestor.classifier.bundle import DEFAULT_VERSION, available_versions
 from attestor.classifier.model import AnnexIIIArea, ContentLifecycle, DeployerType, Role
-from attestor.ledger.__main__ import main as ledger_main
+from attestor.ledger.__main__ import add_verify_arguments, verify_directory
 
 PROGRAM = "attestor"
 
@@ -85,7 +87,7 @@ def build_parser() -> argparse.ArgumentParser:
     ledger_parser = subcommands.add_parser("ledger", help="ledger operations")
     ledger_sub = ledger_parser.add_subparsers(dest="ledger_command", required=True)
     verify_parser = ledger_sub.add_parser("verify", help="verify a ledger directory offline")
-    verify_parser.add_argument("directory", help="e.g. examples/ledger")
+    add_verify_arguments(verify_parser)
 
     demo_parser = subcommands.add_parser(
         "demo", help="run the full pipeline end to end (no keys, no network)"
@@ -103,7 +105,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "classify":
         return _run_classify(args)
     if args.command == "ledger":
-        return ledger_main([args.directory])
+        return verify_directory(Path(args.directory), args.public_key)
     return _run_demo(args)
 
 
