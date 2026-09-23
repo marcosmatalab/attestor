@@ -148,17 +148,11 @@ def _run_classify(args: argparse.Namespace) -> int:
 
 def _run_demo(args: argparse.Namespace) -> int:
     # Imported here so `attestor classify` and `attestor ledger verify` do not pay for
-    # FastAPI and the C2PA native library, which the demo needs and they do not.
-    from fastapi.testclient import TestClient
+    # the C2PA native library, which the demo needs and they do not. The demo calls the
+    # engine directly: no web framework, no HTTP client, no test-only dependency.
+    from attestor.demo import run_demo
 
-    from attestor.api.main import app
-
-    response = TestClient(app).post("/api/demo/run")
-    if response.status_code != 200:
-        print(f"demo failed: HTTP {response.status_code}", file=sys.stderr)
-        return EXIT_USAGE
-
-    report: dict[str, Any] = response.json()
+    report: dict[str, Any] = run_demo()
     if args.json:
         print(json.dumps(report, indent=2, sort_keys=True))
         return EXIT_OK
