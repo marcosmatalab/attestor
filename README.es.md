@@ -142,8 +142,9 @@ flowchart LR
 3. **Sellar.** Los registros con el checksum, el hash del expediente y el hash del manifiesto
    C2PA se convierten en hojas de un árbol Merkle RFC 6962. La raíz se firma con Ed25519 y
    puede llevar un sello de tiempo RFC 3161.
-4. **Verificar.** Cualquiera con la carpeta del registro ejecuta `attestor ledger verify` sin
-   clave privada y sin red, y obtiene un código de salida: `0` íntegro, `1` manipulado.
+4. **Verificar.** Cualquiera con la carpeta del registro y la clave pública del operador ejecuta
+   `attestor ledger verify --public-key`, sin clave privada y sin red, y obtiene un código de
+   salida: `0` íntegro, `1` manipulado, `3` sellado por otra persona.
 
 <details>
 <summary><b>🏛️ Arquitectura completa por módulos</b></summary>
@@ -212,13 +213,13 @@ Sin clave privada, sin configuración y sin red tras la instalación:
 git clone https://github.com/marcosmatalab/attestor.git && cd attestor
 pip install -e ".[dev]"
 
-# 1️⃣  Verifica sin conexión el registro incluido en el repositorio
-attestor ledger verify examples/ledger
-# ledger VERIFIED (Merkle root intact, Ed25519 signature valid) … -> exit 0
+# 1️⃣  Verifica sin conexión el registro incluido, fijando la clave que lo firmó
+attestor ledger verify examples/ledger --public-key examples/ledger/public_key.pem
+# ledger VERIFIED (Merkle root intact, Ed25519 signature valid; signer pinned) … -> exit 0
 
 # 2️⃣  Cambia un byte de la evidencia y observa cómo cambia el veredicto
 sed -i 's/sys-1/sys-9/' examples/ledger/records.json      # macOS: sed -i ''
-attestor ledger verify examples/ledger
+attestor ledger verify examples/ledger --public-key examples/ledger/public_key.pem
 # ledger TAMPERED - integrity_ok=False, signature_ok=True         -> exit 1
 git checkout examples/ledger/records.json
 
@@ -235,7 +236,10 @@ attestor demo
 > [!TIP]
 > En el paso 2, `integrity_ok` pasa a falso mientras `signature_ok` sigue en verdadero. El
 > registro distingue **«la evidencia se modificó después del sellado»** de **«la firma no
-> corresponde a la raíz»**: dos fallos distintos, que se señalan por separado.
+> corresponde a la raíz»**: dos fallos distintos, que se señalan por separado. Volver a sellar
+> registros editados con otra clave supera ambos controles, y eso es lo que detecta la clave
+> fijada: `UNTRUSTED SIGNER`, exit `3`. La huella de la clave es `21ffc076…5544`;
+> [`examples/ledger/`](examples/ledger) lo explica.
 
 ```mermaid
 sequenceDiagram
@@ -243,15 +247,19 @@ sequenceDiagram
     participant O as 🏢 Operador
     participant L as 🔗 Registro
     participant A as 🕵️ Auditor (sin conexión)
+    O-->>A: publica la clave pública (huella)
     O->>L: añade evidencias (checksums, expediente, hashes C2PA)
     O->>L: sella: raíz Merkle + firma Ed25519 (+ RFC 3161)
     L-->>A: entrega la carpeta
     A->>A: recalcula la raíz Merkle a partir de los registros
     A->>A: comprueba la firma Ed25519 sobre la raíz sellada
-    alt la raíz coincide y la firma es válida
-        A-->>O: ✅ VERIFIED (exit 0)
-    else algún registro se editó tras el sellado
+    A->>A: compara la clave firmante con la clave fijada
+    alt algún registro se editó tras el sellado
         A-->>O: ❌ TAMPERED (exit 1)
+    else se volvió a sellar con otra clave
+        A-->>O: ⚠️ UNTRUSTED SIGNER (exit 3)
+    else íntegro y firmado por la clave fijada
+        A-->>O: ✅ VERIFIED (exit 0)
     end
 ```
 
@@ -268,8 +276,9 @@ sequenceDiagram
 | ⚓ Los checksums están anclados a digests literales | `pytest tests/test_checksum_anchors.py` | 27 valores SHA-256 versionados en el repo |
 | 🖼️ La captura coincide hoy con el motor | `pytest tests/test_dashboard_capture.py` | El checksum incrustado en el PNG es igual a un `classify()` en vivo |
 | 🧰 Toda herramienta que usan los controles está declarada | `pytest tests/test_tooling_declared.py` | Analiza el Makefile contra el extra `dev` |
-| 🕵️ Un tercero verifica el registro sin conexión | `attestor ledger verify examples/ledger` | `ledger VERIFIED …`, exit 0, sin red |
+| 🕵️ Un tercero verifica el registro sin conexión | `attestor ledger verify examples/ledger --public-key examples/ledger/public_key.pem` | `ledger VERIFIED …; signer pinned`, exit 0, sin red |
 | 🚨 La manipulación se detecta | cambia un byte de `examples/ledger/records.json` y repite | `ledger TAMPERED …`, exit 1 |
+| 🔏 Un registro resellado con otra clave se detecta | `pytest tests/test_ledger_signer_pinning.py` | Edita, vuelve a sellar con una clave nueva y fija la original: `UNTRUSTED SIGNER`, exit 3 |
 | 🪪 Integridad y confianza se notifican por separado | `attestor demo` | `integrity Valid …; signer UNTRUSTED …` (el certificado de demo se marca correctamente como no incluido en ninguna lista de confianza) |
 | 🌐 La suite completa se ejecuta sin red | `python scripts/run_offline.py` | 417 en verde, toda conexión saliente rechazada |
 

@@ -9,6 +9,7 @@ generated locally, and the path is config-driven; a KMS/HSM signer would replace
 this loader. No such backend is implemented here.
 """
 
+import hashlib
 from pathlib import Path
 
 from cryptography.hazmat.primitives import serialization
@@ -64,3 +65,32 @@ def public_key_hex(public_key: Ed25519PublicKey) -> str:
 def load_public_key_hex(hex_key: str) -> Ed25519PublicKey:
     """Rebuild an Ed25519 public key from its 32-byte hex (an offline verifier input)."""
     return Ed25519PublicKey.from_public_bytes(bytes.fromhex(hex_key))
+
+
+def public_key_fingerprint(hex_key: str) -> str:
+    """SHA-256 of the raw 32-byte key: short enough to publish and compare by eye."""
+    return hashlib.sha256(bytes.fromhex(hex_key)).hexdigest()
+
+
+def public_key_pem(hex_key: str) -> bytes:
+    """The key as a standard SubjectPublicKeyInfo PEM, readable by any Ed25519 tool."""
+    return load_public_key_hex(hex_key).public_bytes(
+        _PEM, serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+
+
+def load_pinned_public_key(path: str | Path) -> str:
+    """Read the key a verifier should expect, as PEM or as 64 hex characters.
+
+    Returns the raw key as hex, the form ``signed_root.json`` stores. Raises
+    ``ValueError`` for anything that is not an Ed25519 public key, and ``OSError`` if
+    the file cannot be read: a pin that silently failed to load would be no pin at all.
+    """
+    data = Path(path).read_bytes()
+    if b"-----BEGIN" in data:
+        key = serialization.load_pem_public_key(data)
+        if not isinstance(key, Ed25519PublicKey):
+            raise ValueError("pinned key must be an Ed25519 public key")
+        return public_key_hex(key)
+    text = data.decode("ascii", errors="replace").strip()
+    return public_key_hex(load_public_key_hex(text))

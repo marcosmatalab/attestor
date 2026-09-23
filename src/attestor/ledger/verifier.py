@@ -8,12 +8,13 @@ that NEVER decides whether the ledger was tampered (the F5 integrity-vs-trust le
 """
 
 import base64
+import hmac
 
 from cryptography import x509
 from cryptography.exceptions import InvalidSignature
 
 from attestor.canonical import canonical_json
-from attestor.ledger.keys import load_public_key_hex
+from attestor.ledger.keys import load_public_key_hex, public_key_fingerprint
 from attestor.ledger.ledger import Record, root_commitment
 from attestor.ledger.merkle import hash_leaf, merkle_root, verify_inclusion
 from attestor.ledger.model import InclusionProof, LedgerVerification, SignedRoot
@@ -26,10 +27,21 @@ def verify_ledger(
     *,
     tsa_leaf: x509.Certificate | None = None,
     tsa_root: x509.Certificate | None = None,
+    expected_public_key: str | None = None,
 ) -> LedgerVerification:
-    """Verify a ledger from public artifacts alone (no private key, no network)."""
+    """Verify a ledger from public artifacts alone (no private key, no network).
+
+    ``expected_public_key`` (raw hex) pins the signer. Without it the signature is only
+    checked against the key the ledger carries, which proves consistency but not who
+    sealed it; the result always reports that key's fingerprint so it can be compared.
+    """
     integrity_ok = _verify_integrity(records, signed_root)
     signature_ok = _verify_signature(signed_root)
+    signer_fingerprint = _fingerprint(signed_root.public_key)
+    signer_pinned = expected_public_key is not None
+    signer_matches_pin = signer_pinned and hmac.compare_digest(
+        signed_root.public_key.lower(), str(expected_public_key).lower()
+    )
 
     # Narrow the Optional directly rather than through a separate flag: the flag
     # carried the same information but the type checker could not see the link,
@@ -63,6 +75,9 @@ def verify_ledger(
         tsa_trusted=tsa_trusted,
         gen_time=gen_time,
         detail=detail,
+        signer_fingerprint=signer_fingerprint,
+        signer_pinned=signer_pinned,
+        signer_matches_pin=signer_matches_pin,
     )
 
 
@@ -85,6 +100,13 @@ def _verify_integrity(records: list[Record], signed_root: SignedRoot) -> bool:
     except ValueError:
         return False
     return recomputed == signed_root.merkle_root
+
+
+def _fingerprint(hex_key: str) -> str:
+    try:
+        return public_key_fingerprint(hex_key)
+    except ValueError:
+        return ""
 
 
 def _verify_signature(signed_root: SignedRoot) -> bool:
