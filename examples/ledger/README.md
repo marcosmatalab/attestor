@@ -52,9 +52,19 @@ agree with each other again. The pin is what catches it:
 The signature is checked with the key stored in `signed_root.json`. On its own that
 proves the records match *a* key, not *whose* key: anyone who edits the records can
 re-seal them with a fresh one. `--public-key` names the key you expect, obtained from a
-channel other than the folder you are checking. Without it, `attestor ledger verify`
-still checks integrity and signature, exits `0` if they hold, and says
-`signer not pinned` next to the fingerprint so you can compare it yourself.
+channel other than the folder you are checking. Without it there is no `0`: a ledger
+whose records and signature hold together is `SIGNER NOT PINNED`, exit `4`, because
+nothing says who sealed it. `--allow-unpinned` accepts any signer by name — exit `0`,
+labelled `signer not pinned`, with the fingerprint printed so you can compare it yourself:
+
+```bash
+attestor ledger verify examples/ledger
+# ledger SIGNER NOT PINNED - records intact and signed, but no key was pinned: ...
+# exit 4
+attestor ledger verify examples/ledger --allow-unpinned
+# ledger VERIFIED (...; signer not pinned: compare signer_sha256 with the published key) ...
+# exit 0
+```
 
 **There is no private key here, and there never will be.** The Ed25519 key that
 signed this root was generated into a temporary directory by

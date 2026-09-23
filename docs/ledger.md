@@ -39,9 +39,10 @@ attestor ledger verify examples/ledger --public-key examples/ledger/public_key.p
 git checkout examples/ledger/records.json
 ```
 
-`python -m attestor.ledger <dir> [--public-key FILE]` is the same verifier without
-installing the package. Exit codes are the interface: `0` verified, `1` tampered, `2`
-usage or I/O error, `3` untrusted signer — and TSA trust never moves them.
+`python -m attestor.ledger <dir> (--public-key FILE | --allow-unpinned)` is the same
+verifier without installing the package. Exit codes are the interface: `0` verified, `1`
+tampered, `2` usage or I/O error, `3` untrusted signer, `4` signer not pinned — and TSA
+trust never moves them.
 
 ### Pinning the signer
 
@@ -55,26 +56,38 @@ the key the verifier expects. The verdicts, in order of precedence:
 |---|---|:---:|
 | `TAMPERED` | Records and signed root do not hold together | `1` |
 | `UNTRUSTED SIGNER` | They hold together, but were sealed by a key other than the pinned one | `3` |
-| `VERIFIED` | Intact and signed — by the pinned key, when one is given | `0` |
+| `SIGNER NOT PINNED` | They hold together, but no `--public-key` was given, so who sealed them is unknown | `4` |
+| `VERIFIED` | Intact and signed by the pinned key — or by any key, with `--allow-unpinned` | `0` |
 
 The SHA-256 fingerprint of the signing key (`signer_sha256`) is printed on every run,
-pinned or not. The API's `/api/ledger/verify` accepts the same pin as
-`expected_public_key`, and the demo pins the key it sealed with.
+pinned or not. Passing both `--public-key` and `--allow-unpinned` is a usage error
+(exit `2`). The same contract holds everywhere the ledger is verified: `verify_ledger()`
+and `governance.verify_log()` take `expected_public_key` and `allow_unpinned`, the API's
+`/api/ledger/verify` takes the same two fields and returns `signer_not_pinned` next to
+`tampered` and `untrusted_signer`, and the demo pins the key it sealed with.
 
-**Decision: without `--public-key`, a consistent ledger still exits `0`.** The
-alternative was to refuse to verify, or to add a fourth code for "unpinned".
+**Decision (0.3.0): without `--public-key`, the verdict is `SIGNER NOT PINNED`, exit
+`4`.** In 0.2.0 a consistent ledger exited `0` without a pin, labelled
+`signer not pinned` in the headline.
 
-- *Why keep `0`:* exit codes are a contract, and `0` has always meant "records and
-  signature hold together"; that is still exactly what is checked. Scripts written
-  against it keep their meaning, and "is the evidence intact?" stays answerable when
-  the operator's key is not at hand.
-- *What it costs:* an unpinned `0` is weaker than a pinned one. It is labelled so — the
-  headline says `signer not pinned` and prints the fingerprint to compare — and every
-  command this repository documents passes `--public-key`.
-- *Why a new code rather than `1`:* a foreign signer and an edited record are different
-  accusations. `1` keeps meaning "the evidence changed after sealing"; `3` means "this
-  was not sealed by who you expected". Tampering outranks it: an edited, re-signed and
-  mismatched ledger reports `1`.
+- *Why it changed:* a script reads the exit code, not the headline. An unpinned `0` let
+  a ledger re-sealed by whoever edited it pass as a success to any caller that forgot
+  the pin — the very attack the pin exists to stop. Now nobody gets a `0` without having
+  named the signer, or having said explicitly that they do not care who it was.
+- *Why `--allow-unpinned` exists:* "are these records intact, whoever signed them?" is a
+  legitimate question — triage, or a ledger whose operator key is not at hand. It stays
+  answerable, by name, with the previous behaviour: exit `0`, the `signer not pinned`
+  label and the fingerprint to compare.
+- *What it costs:* **the meaning of "no key" changed**, which breaks callers. A script
+  that ran `attestor ledger verify DIR` and checked for `0` now gets `4` on a ledger it
+  used to accept, and library code reading `verify_ledger(...).verified` without a key
+  now reads `False`. That is a breaking change to the contract, so it ships as **0.3.0**
+  (in 0.x, the MINOR number carries breaking changes). The fix for any caller is one
+  argument: the operator's key, or `--allow-unpinned`.
+- *Why `4` and not `3` or `1`:* each code names a different finding. `1` means the
+  evidence changed after sealing; `3` means it was sealed by someone other than who you
+  expected; `4` means you did not say who you expected. Tampering outranks both: an
+  edited ledger is `1` with a pin or without one.
 
 - **Deterministic.** Same records + same key → same Merkle root and same Ed25519
   signature (RFC 8032). The RFC 3161 token is *not* byte-reproducible (it depends on the

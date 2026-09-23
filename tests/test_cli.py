@@ -82,7 +82,8 @@ def test_invalid_profile_combination_exits_with_the_usage_code(
 
 
 def test_ledger_verify_accepts_the_committed_example(capsys: pytest.CaptureFixture[str]) -> None:
-    assert main(["ledger", "verify", EXAMPLE_LEDGER]) == 0
+    key = str(Path(EXAMPLE_LEDGER) / "public_key.pem")
+    assert main(["ledger", "verify", EXAMPLE_LEDGER, "--public-key", key]) == 0
     out = capsys.readouterr().out
 
     assert out.startswith("ledger VERIFIED")
