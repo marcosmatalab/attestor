@@ -8,40 +8,26 @@ so the UI shows exactly what F1-F7 produce. Gated engine errors surface as HTTP 
 the engine's own message.
 """
 
-import base64
-import struct
-import tempfile
-import zlib
-from pathlib import Path
 from typing import Any
 
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from fastapi import APIRouter, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel
 
 from attestor.annexiv import generate_dossier, render_pdf
-from attestor.canonical import sha256_hex
 from attestor.classifier import (
-    AnnexIIIArea,
     Bundle,
     Classification,
-    Role,
     SystemProfile,
     classify,
     compare_timelines,
     load_bundle,
 )
+from attestor.demo import run_demo
 from attestor.governance import derive_crosswalk, generate_fria
-from attestor.ledger import Ledger, LedgerVerification, SignedRoot, verify_ledger
-from attestor.ledger.keys import public_key_hex
-from attestor.provenance import (
-    ProvenanceMetadata,
-    SignerConfig,
-    generate_dev_cert,
-    sign_asset,
-    verify_asset,
-)
+from attestor.ledger import SignedRoot, verify_ledger
+from attestor.provenance import verify_asset
+from attestor.report import dump, ledger_report
 
 router = APIRouter(prefix="/api", tags=["attestor"])
 
@@ -55,11 +41,6 @@ def _bundle() -> Bundle:
     return load_bundle(LEGAL_TEXT_BUNDLE)
 
 
-def _dump(model: BaseModel, **computed: Any) -> dict[str, Any]:
-    """Serialize an engine model plus its computed properties, verbatim."""
-    return {**model.model_dump(mode="json"), **computed}
-
-
 def _classification(profile: SystemProfile) -> Classification:
     return classify(profile, _bundle())
 
@@ -68,7 +49,7 @@ def _classification(profile: SystemProfile) -> Classification:
 def classify_endpoint(profile: SystemProfile) -> dict[str, Any]:
     """Classify a system: risk, obligations + effective dates, and the reproducible checksum."""
     result = _classification(profile)
-    return _dump(result, effective_dates=result.effective_dates)
+    return dump(result, effective_dates=result.effective_dates)
 
 
 @router.post("/timeline")
@@ -126,7 +107,7 @@ async def provenance_verify_endpoint(
 ) -> dict[str, Any]:
     """Verify a C2PA-signed asset: integrity and signer trust as SEPARATE axes (F5)."""
     report = verify_asset(await file.read(), format=format)
-    return _dump(report, headline=report.headline)
+    return dump(report, headline=report.headline)
 
 
 class LedgerVerifyRequest(BaseModel):
@@ -145,92 +126,10 @@ def ledger_verify_endpoint(request: LedgerVerifyRequest) -> dict[str, Any]:
     result = verify_ledger(
         request.records, request.signed_root, expected_public_key=request.expected_public_key
     )
-    return _ledger_dump(result)
+    return ledger_report(result)
 
 
 @router.post("/demo/run")
 def demo_run_endpoint() -> dict[str, Any]:
-    """Run one example pipeline end-to-end with REAL engine outputs (no mocks).
-
-    A high-risk PROVIDER path (so Annex IV applies): classify -> Annex IV -> sign an asset
-    -> verify (C2PA) -> anchor in the ledger -> verify the ledger offline. Signing and
-    sealing use EPHEMERAL dev keys generated per request in a temp dir (never committed),
-    so the C2PA signer is honestly untrusted and the ledger still verifies offline.
-    """
-    bundle = _bundle()
-    profile = SystemProfile(role=Role.provider, annex_iii_area=AnnexIIIArea.employment)
-    classification = classify(profile, bundle)
-    dossier = generate_dossier(profile, classification, bundle, system_name="Demo hiring system")
-
-    with tempfile.TemporaryDirectory() as tmp:
-        cert, key = Path(tmp) / "chain.pem", Path(tmp) / "key.pem"
-        generate_dev_cert(cert, key)
-        source, dest = Path(tmp) / "in.png", Path(tmp) / "signed.png"
-        source.write_bytes(_demo_png())
-        sign_asset(
-            source,
-            dest,
-            SignerConfig(cert_path=str(cert), private_key_path=str(key)),
-            ProvenanceMetadata(title="demo output", model="claude-opus-4-8"),
-        )
-        signed_asset = dest.read_bytes()
-
-    provenance = verify_asset(signed_asset)
-
-    records: list[dict[str, Any]] = [
-        {"type": "classification", "checksum": classification.checksum},
-        {"type": "annex_iv", "classification_checksum": dossier.classification_checksum},
-        {"type": "c2pa_manifest", "sha256": sha256_hex(signed_asset)},
-    ]
-    ledger_key = Ed25519PrivateKey.generate()  # ephemeral key
-    signed_root = Ledger(records).seal(ledger_key)
-    # The demo sealed the ledger itself, so it knows which key to expect: pin it, the
-    # way an auditor pins the operator's published key.
-    ledger_result = verify_ledger(
-        records, signed_root, expected_public_key=public_key_hex(ledger_key.public_key())
-    )
-
-    return {
-        "profile": profile.model_dump(mode="json"),
-        "classification": _dump(classification, effective_dates=classification.effective_dates),
-        "timeline": compare_timelines(profile).model_dump(mode="json"),
-        "annex_iv": dossier.model_dump(mode="json"),
-        "crosswalk": derive_crosswalk(classification).model_dump(mode="json"),
-        "provenance": _dump(provenance, headline=provenance.headline),
-        "signed_asset_b64": base64.b64encode(signed_asset).decode("ascii"),
-        "ledger": {
-            "records": records,
-            "signed_root": signed_root.model_dump(mode="json", exclude_none=True),
-            "verification": _ledger_dump(ledger_result),
-        },
-    }
-
-
-def _ledger_dump(result: LedgerVerification) -> dict[str, Any]:
-    return _dump(
-        result,
-        headline=result.headline,
-        verified=result.verified,
-        tampered=result.tampered,
-        untrusted_signer=result.untrusted_signer,
-    )
-
-
-def _demo_png(
-    width: int = 64, height: int = 64, rgb: tuple[int, int, int] = (120, 140, 160)
-) -> bytes:
-    """A minimal valid PNG (stdlib only) to stand in for an AI-generated output."""
-
-    def chunk(typ: bytes, data: bytes) -> bytes:
-        body = typ + data
-        crc = zlib.crc32(body) & 0xFFFFFFFF
-        return struct.pack(">I", len(data)) + body + struct.pack(">I", crc)
-
-    ihdr = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
-    raw = b"".join(b"\x00" + bytes(rgb) * width for _ in range(height))
-    return (
-        b"\x89PNG\r\n\x1a\n"
-        + chunk(b"IHDR", ihdr)
-        + chunk(b"IDAT", zlib.compress(raw, 9))
-        + chunk(b"IEND", b"")
-    )
+    """Run the example pipeline end to end: the same function ``attestor demo`` calls."""
+    return run_demo(_bundle())

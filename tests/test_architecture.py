@@ -45,8 +45,17 @@ NETWORK_MODULES = frozenset(
 # The single sanctioned network seam: requesting an RFC 3161 token from a TSA.
 NETWORK_ALLOWED = frozenset({"ledger/timestamp.py"})
 
+# Top-level modules that belong to the engine side of the arrow: the example pipeline
+# and the serializer the API and the CLI share. The CLI calls them directly, so they
+# must never pull in the web layer.
+ENGINE_TOP_LEVEL = ("demo.py", "report.py")
+
+# The web framework. The engine is a library; FastAPI belongs to ``api/`` alone.
+WEB_FRAMEWORK = frozenset({"fastapi", "starlette"})
+
 ENGINE_MODULES = sorted(
-    path for package in ENGINE_PACKAGES for path in (SRC / package).rglob("*.py")
+    [path for package in ENGINE_PACKAGES for path in (SRC / package).rglob("*.py")]
+    + [SRC / name for name in ENGINE_TOP_LEVEL]
 )
 
 
@@ -83,6 +92,8 @@ def test_the_engine_packages_were_actually_found() -> None:
     assert len(ENGINE_MODULES) >= 15
     for package in ENGINE_PACKAGES:
         assert (SRC / package).is_dir(), package
+    for name in ENGINE_TOP_LEVEL:
+        assert (SRC / name).is_file(), name
 
 
 @pytest.mark.parametrize("path", ENGINE_MODULES, ids=_relative)
@@ -94,6 +105,12 @@ def test_engine_module_imports_no_llm_sdk(path: pathlib.Path) -> None:
 @pytest.mark.parametrize("path", ENGINE_MODULES, ids=_relative)
 def test_engine_module_does_not_import_the_api_layer(path: pathlib.Path) -> None:
     offending = {m for m in imported_modules(path) if m.startswith("attestor.api")}
+    assert not offending, f"{_relative(path)} imports {sorted(offending)}"
+
+
+@pytest.mark.parametrize("path", ENGINE_MODULES, ids=_relative)
+def test_engine_module_does_not_import_the_web_framework(path: pathlib.Path) -> None:
+    offending = imported_roots(path) & WEB_FRAMEWORK
     assert not offending, f"{_relative(path)} imports {sorted(offending)}"
 
 
