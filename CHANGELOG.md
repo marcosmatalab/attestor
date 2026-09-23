@@ -10,6 +10,44 @@ moved because the legislator moved it or because we did.
 Full regulatory detail, bundle by bundle, is in
 [`docs/regulatory-changelog.md`](docs/regulatory-changelog.md).
 
+## [0.3.0] — 2026-09-23
+
+**Breaking.** Verifying a ledger without naming its signer is no longer a pass. **Why
+0.3.0:** the meaning of running `attestor ledger verify` without a key changed — a
+ledger that used to exit `0` now exits `4` — and library callers reading
+`verify_ledger(...).verified` without a key now read `False`. Semantic Versioning puts a
+breaking change in a MAJOR release; before 1.0.0 that role falls to the MINOR number.
+
+### Changed
+
+- **No `0` without a pinned signer.** Without `--public-key`, `attestor ledger verify` and
+  `python -m attestor.ledger` report `SIGNER NOT PINNED`, exit `4`, even when integrity and
+  signature hold: nothing says who sealed the ledger, and a re-seal by whoever edited it
+  would otherwise pass as a success to any script that forgot the pin. Tampering still
+  outranks it (exit `1`, with a key or without). The same default applies to
+  `verify_ledger()`, `governance.verify_log()` and `POST /api/ledger/verify`. The reasoning
+  and the cost are in [`docs/ledger.md`](docs/ledger.md#pinning-the-signer). (#32)
+
+### Added
+
+- `--allow-unpinned` on both CLIs, `allow_unpinned` on `verify_ledger()`, `verify_log()`
+  and the API: the previous behaviour, asked for by name — exit `0`, labelled
+  `signer not pinned`, with the signing key's fingerprint. Combined with `--public-key`
+  it is a usage error (exit `2`). (#32)
+- `signer_not_pinned` in the API's ledger verification response. (#32)
+
+### Fixed
+
+- The dashboard's ledger badge showed "tampered" for every result that was not verified;
+  it now shows the engine's verdict: signer not pinned, untrusted signer or tampered. (#32)
+
+### Migrating
+
+- Scripts: add `--public-key <operator key>`; or `--allow-unpinned` to keep 0.2.0
+  behaviour.
+- Library: pass `expected_public_key=` (raw hex), or `allow_unpinned=True`.
+- API: send `expected_public_key`, or `"allow_unpinned": true`.
+
 ## [0.2.0] — 2026-09-23
 
 A security fix that needed a new feature to land, plus three corrections. **Why 0.2.0:**

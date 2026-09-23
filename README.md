@@ -94,7 +94,7 @@ attestor classify --role provider                                  # internal to
 
 | ✅ Python tests | 📈 Coverage | 🧪 Frontend tests | 🔎 Type errors | 🧹 Dead code | ⚓ Anchored digests |
 |:---:|:---:|:---:|:---:|:---:|:---:|
-| **511** passing | **97%** (CI gate: 95%) | **20** passing | **0** · mypy strict | **0** findings | **27** literal SHA-256 |
+| **537** passing | **97%** (CI gate: 95%) | **24** passing | **0** · mypy strict | **0** findings | **27** literal SHA-256 |
 
 | 🤖 LLMs in the decision | 🌐 Network calls during verification | 📜 Regulatory scenarios | 🔁 Same input, same output |
 |:---:|:---:|:---:|:---:|
@@ -209,7 +209,7 @@ Installed from the tagged release (nothing is published to a package index). No 
 key, no configuration, and no network after install:
 
 ```bash
-git clone --branch v0.2.0 https://github.com/marcosmatalab/attestor.git && cd attestor
+git clone --branch v0.3.0 https://github.com/marcosmatalab/attestor.git && cd attestor
 pip install -e .
 
 # 1️⃣  Verify the committed ledger offline, pinned to the key that signed it
@@ -280,7 +280,7 @@ sequenceDiagram
 | 🔏 A ledger re-sealed with another key is caught | `pytest tests/test_ledger_signer_pinning.py` | Edit, re-seal with a fresh key, pin the original: `UNTRUSTED SIGNER`, exit 3 |
 | 🔑 No exit 0 without a pinned signer | `attestor ledger verify examples/ledger` | `SIGNER NOT PINNED`, exit 4 (`--allow-unpinned` opts back into 0) |
 | 🪪 Integrity and trust are reported separately | `attestor demo` | `integrity Valid …; signer UNTRUSTED …` (the demo certificate is correctly flagged as not on a trust list) |
-| 🌐 The full suite runs with no network | `python scripts/run_offline.py` | 511 passed, every outbound connection refused |
+| 🌐 The full suite runs with no network | `python scripts/run_offline.py` | 537 passed, every outbound connection refused |
 
 Each of these gates was proven by breaking it on purpose: `import httpx` in the classifier
 fails the architecture test, one edited date fails nine checksum anchors, one line removed
@@ -339,9 +339,9 @@ call for an evidence system:
 
 | | Measured | Command |
 |---|---|---|
-| 🧪 Python tests | **511 passed** | `pytest` |
-| 📈 Coverage | **97%** of 1,254 statements, CI gate at 95% | `make test` |
-| ⚛️ Frontend tests | **20 passed** in 7 files | `cd web && npm test` |
+| 🧪 Python tests | **537 passed** | `pytest` |
+| 📈 Coverage | **97%** of 1,269 statements, CI gate at 95% | `make test` |
+| ⚛️ Frontend tests | **24 passed** in 8 files | `cd web && npm test` |
 | 🔎 Types | mypy **strict, 0 errors** across 38 modules | `mypy src/attestor` |
 | 🧹 Dead code | **0 findings** | `vulture src tests --min-confidence 80` |
 | ✨ Lint and format | clean, `ruff` pinned exactly | `ruff check . && ruff format --check .` |

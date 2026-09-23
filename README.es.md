@@ -96,7 +96,7 @@ attestor classify --role provider                                  # herramienta
 
 | ✅ Tests Python | 📈 Cobertura | 🧪 Tests frontend | 🔎 Errores de tipos | 🧹 Código muerto | ⚓ Digests anclados |
 |:---:|:---:|:---:|:---:|:---:|:---:|
-| **511** en verde | **97 %** (umbral CI: 95 %) | **20** en verde | **0** · mypy strict | **0** hallazgos | **27** SHA-256 literales |
+| **537** en verde | **97 %** (umbral CI: 95 %) | **24** en verde | **0** · mypy strict | **0** hallazgos | **27** SHA-256 literales |
 
 | 🤖 LLMs en la decisión | 🌐 Llamadas de red al verificar | 📜 Escenarios regulatorios | 🔁 Misma entrada, misma salida |
 |:---:|:---:|:---:|:---:|
@@ -211,7 +211,7 @@ Se instala desde la versión etiquetada (no se publica en ningún índice de paq
 clave privada, sin configuración y sin red tras la instalación:
 
 ```bash
-git clone --branch v0.2.0 https://github.com/marcosmatalab/attestor.git && cd attestor
+git clone --branch v0.3.0 https://github.com/marcosmatalab/attestor.git && cd attestor
 pip install -e .
 
 # 1️⃣  Verifica sin conexión el registro incluido, fijando la clave que lo firmó
@@ -283,7 +283,7 @@ sequenceDiagram
 | 🔏 Un registro resellado con otra clave se detecta | `pytest tests/test_ledger_signer_pinning.py` | Edita, vuelve a sellar con una clave nueva y fija la original: `UNTRUSTED SIGNER`, exit 3 |
 | 🔑 Ningún exit 0 sin firmante fijado | `attestor ledger verify examples/ledger` | `SIGNER NOT PINNED`, exit 4 (`--allow-unpinned` vuelve a dar 0 de forma explícita) |
 | 🪪 Integridad y confianza se notifican por separado | `attestor demo` | `integrity Valid …; signer UNTRUSTED …` (el certificado de demo se marca correctamente como no incluido en ninguna lista de confianza) |
-| 🌐 La suite completa se ejecuta sin red | `python scripts/run_offline.py` | 511 en verde, toda conexión saliente rechazada |
+| 🌐 La suite completa se ejecuta sin red | `python scripts/run_offline.py` | 537 en verde, toda conexión saliente rechazada |
 
 Cada uno de estos controles se ha comprobado rompiéndolo a propósito: un `import httpx` en el
 clasificador hace fallar el test de arquitectura, una fecha editada hace fallar nueve anclas de
@@ -342,9 +342,9 @@ uno es el adecuado para un sistema de evidencias:
 
 | | Medido | Comando |
 |---|---|---|
-| 🧪 Tests Python | **511 en verde** | `pytest` |
-| 📈 Cobertura | **97 %** de 1.254 instrucciones, umbral de CI en el 95 % | `make test` |
-| ⚛️ Tests frontend | **20 en verde** en 7 ficheros | `cd web && npm test` |
+| 🧪 Tests Python | **537 en verde** | `pytest` |
+| 📈 Cobertura | **97 %** de 1.269 instrucciones, umbral de CI en el 95 % | `make test` |
+| ⚛️ Tests frontend | **24 en verde** en 8 ficheros | `cd web && npm test` |
 | 🔎 Tipos | mypy **strict, 0 errores** en 38 módulos | `mypy src/attestor` |
 | 🧹 Código muerto | **0 hallazgos** | `vulture src tests --min-confidence 80` |
 | ✨ Lint y formato | limpio, `ruff` fijado a versión exacta | `ruff check . && ruff format --check .` |
