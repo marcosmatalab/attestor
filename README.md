@@ -2,7 +2,7 @@
 
 # 🛡️ Attestor
 
-### Automated EU AI Act compliance, with evidence anyone can verify offline.
+### EU AI Act risk classification and compliance evidence, verifiable by anyone.
 
 **Describe an AI system → get its legal risk class, its obligations and their deadlines, a
 ready-to-complete Annex IV technical dossier, and a cryptographic receipt anyone can verify offline.**
@@ -35,6 +35,7 @@ ready-to-complete Annex IV technical dossier, and a cryptographic receipt anyone
 | 🧠 **What Attestor does** | A **rule engine** (no LLM) turns a short questionnaire into a risk class, the list of obligations that apply and the date each one binds, plus the **Annex IV technical dossier** (the documentation the Act requires) as a PDF, with every legal citation checked. |
 | 🔐 **Why it can be trusted** | Every result carries a **reproducible checksum** that can be sealed in a **cryptographic ledger** (Ed25519-signed Merkle tree, optional RFC 3161 timestamp). An auditor verifies it **offline**, with one command. |
 | 🖼️ **Plus** | Signs AI-generated content with **C2PA Content Credentials** (the machine-readable marking of Art. 50(2)) and maps the result to **ISO/IEC 42001**, the **Fundamental Rights Impact Assessment** (FRIA, Art. 27) and **Art. 12** logging. |
+| 👥 **Who it's for** | Teams that **build** AI systems (providers), organisations that **use** them (deployers such as banks, insurers or public bodies), and the **auditors** who have to check both. |
 
 <div align="center">
 
@@ -44,6 +45,48 @@ ready-to-complete Annex IV technical dossier, and a cryptographic receipt anyone
 reproduces today, and a test fails CI if it ever drifts.</sub>
 
 </div>
+
+## 💡 In plain words
+
+Think of Attestor as **a tax calculator for AI regulation that also prints a signed, tamper-evident receipt**.
+
+You answer a few questions about your AI system: are you building it or using it, what is it
+used for, does it talk to people, does it generate images or text. Attestor tells you, with
+the article of the law behind every obligation:
+
+- 🚦 **how risky the law considers it,**
+- 📋 **what you are required to do,**
+- 📅 **by which date,**
+- 🧾 and gives you **signed proof** of that answer and of the version of the law it used. If a
+  sealed record is edited, verification against your published key fails. Add an RFC 3161
+  timestamp and it also proves *when*.
+
+**Real outputs of the engine**, under the law in force (`reg-2026-1744`):
+
+| Scenario | Risk | What Attestor reports | From |
+|---|:---:|---|:---:|
+| 🧑‍💼 A company sells an AI tool that screens CVs | 🟠 **High** | **13 obligations**: risk management, data governance, logging, human oversight, CE marking… (Art. 9–17, 43, 47–49) | 2 Dec 2027 |
+| 🏦 A bank uses an AI credit-scoring system | 🟠 **High** | **2 obligations**: log retention (Art. 26(6)) and a fundamental rights impact assessment (Art. 27) | 2 Dec 2027 |
+| 💬 A customer-service chatbot | 🟡 **Limited** | **1 obligation**: tell users they are talking to an AI (Art. 50(1)) | 2 Aug 2026 |
+| 🗂️ An internal tool with none of the above | 🟢 **Minimal** | No specific obligations | — |
+
+<details>
+<summary>▶️ Reproduce each row</summary>
+
+```bash
+attestor classify --role provider --annex-iii-area employment      # CV screening
+attestor classify --role deployer --annex-iii-area credit_scoring  # bank, credit scoring
+attestor classify --role provider --interacts-with-humans          # chatbot
+attestor classify --role provider                                  # internal tool
+```
+
+</details>
+
+> [!NOTE]
+> The CV screener under the law **as originally enacted** (`--bundle v2026-08`) has the same
+> 13 obligations, due **2 Aug 2026**. The Digital Omnibus moved them 16 months later.
+> Attestor keeps every version of the law it has modelled and can answer under any of them,
+> so the change itself is visible and reproducible.
 
 ## 📊 At a glance
 
@@ -55,7 +98,7 @@ reproduces today, and a test fails CI if it ever drifts.</sub>
 
 | 🤖 LLMs in the decision | 🌐 Network calls during verification | 📜 Regulatory scenarios | 🔁 Same input, same output |
 |:---:|:---:|:---:|:---:|
-| **0** · enforced by an automated test | **0** · enforced by an automated test | **3** bundles (2 frozen · 1 in force) | **1** checksum · byte-identical on every run |
+| **0** · enforced by an automated test | **0** · enforced by an automated test | **3** bundles (2 historical · 1 in force), all hash-anchored | **Identical** checksum on every run |
 
 </div>
 
@@ -97,8 +140,8 @@ flowchart LR
 3. **Seal.** Records carrying the checksum, the dossier hash and the C2PA manifest hash
    become leaves of an RFC 6962 Merkle tree. The root is signed with Ed25519 and can carry
    an RFC 3161 timestamp.
-4. **Verify.** Anyone with the ledger folder runs `attestor ledger verify` with no keys and
-   no network, and gets an exit code: `0` intact, `1` tampered.
+4. **Verify.** Anyone with the ledger folder runs `attestor ledger verify` with no private key
+   and no network, and gets an exit code: `0` intact, `1` tampered.
 
 <details>
 <summary><b>🏛️ Full module architecture</b></summary>
@@ -143,9 +186,25 @@ flowchart TD
 
 </details>
 
+## 🤔 Why it's built this way
+
+When a regulator or an auditor examines an AI system, they ask three questions. Each part of
+Attestor exists to answer one of them **with proof rather than a promise**:
+
+| The question | Attestor's answer | How |
+|---|---|---|
+| ❓ *What did you decide, and why?* | A risk class and a list of obligations, each citing its article | A rule engine over versioned YAML rules that a lawyer can review rule by rule |
+| ❓ *Under which version of the law?* | Every result names its regulatory bundle and that bundle's SHA-256 | Bundles are frozen; a change in the law is a new file, never an edit |
+| ❓ *Can you prove it wasn't changed later?* | A signed ledger that anyone verifies offline against the operator's published public key | Ed25519 + RFC 6962 Merkle tree + RFC 3161, with a `0`/`1` exit code |
+
+**Why not just ask an LLM?** Because a compliance answer is **evidence**, and evidence has to
+come out identical when someone else recomputes it months later. A language model cannot
+guarantee that; a rule engine with a checksum can. The engine contains no LLM, and a test
+fails CI if an LLM SDK is ever imported into it.
+
 ## 🚀 Try it in 60 seconds
 
-No keys, no configuration, and no network after install:
+No private key, no configuration, and no network after install:
 
 ```bash
 git clone https://github.com/marcosmatalab/attestor.git && cd attestor
@@ -173,7 +232,7 @@ attestor demo
 
 > [!TIP]
 > In step 2, `integrity_ok` goes false while `signature_ok` stays true. The ledger tells
-> **"the evidence was changed after sealing"** apart from **"the signature is forged"**:
+> **"the evidence was changed after sealing"** apart from **"the signature does not match the root"**:
 > two different failures, reported separately.
 
 ```mermaid
@@ -231,7 +290,7 @@ timeline
 
 | Bundle | What it is | Status |
 |---|---|---|
-| `v2026-08` | Reg. (EU) 2024/1689 as originally enacted | 🧊 Frozen, historical |
+| `v2026-08` | Reg. (EU) 2024/1689 as originally enacted (named after its 2 Aug 2026 application date) | 🧊 Frozen, historical |
 | `omnibus-2026` | The Digital Omnibus as modelled on 23 June 2026, while still a proposal | 🧊 Frozen, historical |
 | `reg-2026-1744` | Reg. 2024/1689 as amended by Reg. 2026/1744 | 🟢 **In force, and the default** |
 
@@ -243,16 +302,20 @@ That was designed, not lucky. Effective dates live **on each obligation**, never
 global date, so an amendment that moves some deadlines and not others is additive by
 construction. Full history in [`docs/regulatory-changelog.md`](docs/regulatory-changelog.md).
 
-## 🧠 Key design decisions
+## ⚖️ Trade-offs, chosen on purpose
 
-| Decision | Why it matters |
-|---|---|
-| 📆 **Effective dates per obligation**, not one global date | A new regulation was absorbed by adding a file, not by rewriting the engine |
-| ⚖️ **Rule engine, not an LLM**, for the legal decision | Same input, same output, same checksum, which is what makes an audit trail possible |
-| 🪪 **Integrity and trust as two separate axes**, in both C2PA and RFC 3161 | An unrecognised signer is never mistaken for a tampered file |
-| 🧬 **Default-valued fields excluded from the canonical form** | New questionnaire fields don't change the checksum of older inputs |
-| 🧾 **Exit codes are the interface** | A CI pipeline or an auditor's script gates on `0`/`1`, never on parsing text |
-| 🖨️ **Deterministic dossier and PDF** | The same inputs always produce the same dossier, whose canonical hash is sealed in the ledger |
+Every design gives something up. These are the main trade-offs, and why each one is the right
+call for an evidence system:
+
+| Choice | What it buys | What it costs | Why it's worth it |
+|---|---|---|---|
+| **Rule engine** instead of an LLM | Reproducible, auditable decisions | Legal interpretations are written by hand in YAML; input is a structured questionnaire | An answer that can't be recomputed identically is not evidence |
+| **Signed append-only log** instead of a blockchain | No infrastructure, no fees, one-command offline verification | One operator signs, so auditors check its key against the one it published; proof of *when* comes from RFC 3161 | An auditor needs a file to check, not a network to join |
+| **Frozen bundles** instead of editing rules | Every past answer stays exactly reproducible | A change in the law is a new bundle file, with some duplication | Editing a rule in place would make sealed answers impossible to reproduce |
+| **Deadlines per obligation** instead of one global date | Amendments that move only some dates are purely additive | More verbose bundles | This is what let the Omnibus land as a single new file |
+| **Network only when signing or sealing**, never when verifying | Anyone verifies, anywhere, offline | An RFC 3161 timestamp (ledger root or C2PA manifest) needs a call to a timestamping authority | Verification is what third parties run; signing stays on the operator's side |
+| **Integrity and signer trust** reported separately | An unknown signer is never mistaken for tampering | Two verdicts to read instead of one boolean | Merging them causes false alarms or false confidence |
+| **Default-valued fields left out** of the canonical form | New questionnaire fields don't change older checksums | A new field whose default carries meaning needs a new bundle | Old evidence keeps verifying as the questionnaire grows |
 
 <a id="engineering-quality"></a>
 
