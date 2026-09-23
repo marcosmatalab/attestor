@@ -18,10 +18,11 @@ app = FastAPI(
     description="Deterministic EU AI Act compliance engine (portfolio demonstration).",
 )
 
-# Allow the local Next.js dev server to call the API during development.
+# Allow the local Next.js dev server to call the API during development. The list is
+# config-driven rather than hardcoded: see CORS_ORIGINS in .env.example.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=[origin.strip() for origin in settings.cors_origins.split(",") if origin.strip()],
     allow_methods=["*"],
     allow_headers=["*"],
 )

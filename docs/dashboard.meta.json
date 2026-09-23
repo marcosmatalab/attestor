@@ -1,0 +1,18 @@
+{
+  "captured_at": "2026-09-23T08:26:04Z",
+  "classification_checksum": "d821e3e0b95d4edda4416916f2a5b02ef0296f34704a0010ee0222b3a9e0ee48",
+  "commit": "a5fb9937220cc6ba5f4129e48ba774d83d0da4f0",
+  "device_scale_factor": 2,
+  "margin_css_px": 110,
+  "png_bytes": 310516,
+  "png_pixels": {
+    "height": 2762,
+    "width": 2400
+  },
+  "png_sha256": "889a7439d52b465c38414876bc0cff559531b055dfb96fc1dea2ac54ba823c94",
+  "profile": "provider / annex III: employment",
+  "viewport": {
+    "height": 1381,
+    "width": 1200
+  }
+}

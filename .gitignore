@@ -29,6 +29,7 @@ htmlcov/
 
 # Generated reports / artifacts
 reports/
+.capture/
 
 # IDE / OS
 .idea/
