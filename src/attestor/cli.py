@@ -10,9 +10,10 @@ repository's central claim takes one command instead of a Python snippet:
 Exit codes are part of the contract, not decoration, and ``ledger verify`` keeps the
 ones ``python -m attestor.ledger`` publishes: ``0`` verified, ``1`` tampered, ``2`` usage
 or I/O error, ``3`` untrusted signer (intact, but not signed by the ``--public-key``
-given). A script that cannot tell "the evidence was edited" from "I could not read the
-file" is not a check. TSA trust never moves the exit code, for the same reason it never
-does in the module CLI.
+given), ``4`` signer not pinned (intact, but no ``--public-key``; ``--allow-unpinned``
+turns that into ``0`` for whoever asks for it by name). A script that cannot tell "the
+evidence was edited" from "I could not read the file" is not a check. TSA trust never
+moves the exit code, for the same reason it never does in the module CLI.
 """
 
 import argparse
@@ -105,7 +106,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "classify":
         return _run_classify(args)
     if args.command == "ledger":
-        return verify_directory(Path(args.directory), args.public_key)
+        return verify_directory(Path(args.directory), args.public_key, args.allow_unpinned)
     return _run_demo(args)
 
 

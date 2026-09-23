@@ -142,7 +142,7 @@ flowchart LR
    an RFC 3161 timestamp.
 4. **Verify.** Anyone with the ledger folder and the operator's public key runs
    `attestor ledger verify --public-key`, with no private key and no network, and gets an
-   exit code: `0` intact, `1` tampered, `3` sealed by someone else.
+   exit code: `0` intact, `1` tampered, `3` sealed by someone else, `4` no key pinned.
 
 <details>
 <summary><b>🏛️ Full module architecture</b></summary>
@@ -196,7 +196,7 @@ Attestor exists to answer one of them **with proof rather than a promise**:
 |---|---|---|
 | ❓ *What did you decide, and why?* | A risk class and a list of obligations, each citing its article | A rule engine over versioned YAML rules that a lawyer can review rule by rule |
 | ❓ *Under which version of the law?* | Every result names its regulatory bundle and that bundle's SHA-256 | Bundles are frozen; a change in the law is a new file, never an edit |
-| ❓ *Can you prove it wasn't changed later?* | A signed ledger that anyone verifies offline against the operator's published public key | Ed25519 + RFC 6962 Merkle tree + RFC 3161, with a `0`/`1`/`3` exit code |
+| ❓ *Can you prove it wasn't changed later?* | A signed ledger that anyone verifies offline against the operator's published public key | Ed25519 + RFC 6962 Merkle tree + RFC 3161, with a `0`/`1`/`3`/`4` exit code |
 
 **Why not just ask an LLM?** Because a compliance answer is **evidence**, and evidence has to
 come out identical when someone else recomputes it months later. A language model cannot
@@ -236,8 +236,9 @@ attestor demo
 > In step 2, `integrity_ok` goes false while `signature_ok` stays true. The ledger tells
 > **"the evidence was changed after sealing"** apart from **"the signature does not match the root"**:
 > two different failures, reported separately. Re-sealing edited records with another key
-> gets past both, and that is what the pin catches: `UNTRUSTED SIGNER`, exit `3`. The key's
-> fingerprint is `21ffc076…5544`; [`examples/ledger/`](examples/ledger) explains the pin.
+> gets past both, and that is what the pin catches: `UNTRUSTED SIGNER`, exit `3`. Run without
+> a key and the answer is `SIGNER NOT PINNED`, exit `4`: no `0` without naming the signer.
+> The key's fingerprint is `21ffc076…5544`; [`examples/ledger/`](examples/ledger) explains the pin.
 
 ```mermaid
 sequenceDiagram
@@ -277,6 +278,7 @@ sequenceDiagram
 | 🕵️ A third party verifies the ledger offline | `attestor ledger verify examples/ledger --public-key examples/ledger/public_key.pem` | `ledger VERIFIED …; signer pinned`, exit 0, no network |
 | 🚨 Tampering is detected | flip a byte in `examples/ledger/records.json`, re-run | `ledger TAMPERED …`, exit 1 |
 | 🔏 A ledger re-sealed with another key is caught | `pytest tests/test_ledger_signer_pinning.py` | Edit, re-seal with a fresh key, pin the original: `UNTRUSTED SIGNER`, exit 3 |
+| 🔑 No exit 0 without a pinned signer | `attestor ledger verify examples/ledger` | `SIGNER NOT PINNED`, exit 4 (`--allow-unpinned` opts back into 0) |
 | 🪪 Integrity and trust are reported separately | `attestor demo` | `integrity Valid …; signer UNTRUSTED …` (the demo certificate is correctly flagged as not on a trust list) |
 | 🌐 The full suite runs with no network | `python scripts/run_offline.py` | 511 passed, every outbound connection refused |
 

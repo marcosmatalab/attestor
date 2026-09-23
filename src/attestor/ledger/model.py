@@ -70,6 +70,9 @@ class LedgerVerification(BaseModel):
     signer_fingerprint: str = ""  # SHA-256 of the raw signing key, always reported
     signer_pinned: bool = False  # the caller named the key it expects
     signer_matches_pin: bool = False  # ...and the ledger was signed by exactly that key
+    # Without a pin, "intact and signed" says nothing about WHO signed, so it is not a
+    # pass unless the caller explicitly accepts that (``allow_unpinned``).
+    unpinned_allowed: bool = False
 
     @property
     def tampered(self) -> bool:
@@ -82,13 +85,18 @@ class LedgerVerification(BaseModel):
         return not self.tampered and self.signer_pinned and not self.signer_matches_pin
 
     @property
-    def verified(self) -> bool:
-        """Intact, signed, and - when a key was pinned - signed by that key.
+    def signer_not_pinned(self) -> bool:
+        """Intact and signed, but no key was pinned and the caller did not accept that."""
+        return not self.tampered and not self.signer_pinned and not self.unpinned_allowed
 
-        NOT gated on TSA trust. Without a pin this keeps its original meaning (intact and
-        signed by the key the ledger carries); the headline says so explicitly.
+    @property
+    def verified(self) -> bool:
+        """Intact, signed, and signed by the pinned key - or unpinned by explicit consent.
+
+        NOT gated on TSA trust. Precedence: tampered, then untrusted signer, then signer
+        not pinned; only a ledger clear of all three is verified.
         """
-        return not self.tampered and not self.untrusted_signer
+        return not (self.tampered or self.untrusted_signer or self.signer_not_pinned)
 
     @property
     def headline(self) -> str:
@@ -102,6 +110,11 @@ class LedgerVerification(BaseModel):
             return (
                 "ledger UNTRUSTED SIGNER - records intact and signed, "
                 "but by a key other than the pinned one"
+            )
+        if self.signer_not_pinned:
+            return (
+                "ledger SIGNER NOT PINNED - records intact and signed, but no key was pinned: "
+                "pass --public-key, or --allow-unpinned to accept any signer"
             )
         signer = (
             "signer pinned"

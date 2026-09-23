@@ -33,7 +33,7 @@ def _tsa_certs() -> tuple[x509.Certificate, x509.Certificate]:
 def test_valid_ledger_verifies_with_public_inputs_only() -> None:
     # seal() uses the operator's key; verify_ledger() touches only public artifacts.
     signed = seal(_RECORDS, _TEST_KEY)
-    result = verify_ledger(_RECORDS, signed)
+    result = verify_ledger(_RECORDS, signed, expected_public_key=signed.public_key)
 
     assert result.integrity_ok is True
     assert result.signature_ok is True
@@ -87,8 +87,10 @@ def test_valid_ledger_with_untrusted_tsa_is_still_verified() -> None:
     signed = seal(_RECORDS, _TEST_KEY).model_copy(update={"timestamp": build_timestamp_info(token)})
     leaf, root = _tsa_certs()
 
-    result = verify_ledger(_RECORDS, signed, tsa_leaf=leaf, tsa_root=root)
-    assert result.verified is True  # integrity + signature hold
+    result = verify_ledger(
+        _RECORDS, signed, tsa_leaf=leaf, tsa_root=root, expected_public_key=signed.public_key
+    )
+    assert result.verified is True  # integrity + signature + pinned signer hold
     assert result.has_timestamp is True
     assert result.timestamp_ok is True  # token is cryptographically valid
     assert result.tsa_trusted is False  # ...but the TSA is not a recognised authority

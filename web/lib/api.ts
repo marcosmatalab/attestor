@@ -120,6 +120,10 @@ export interface LedgerVerification {
   signature_ok: boolean;
   has_timestamp: boolean;
   verified: boolean;
+  // The engine's verdicts, serialized verbatim; precedence is decided server-side.
+  tampered?: boolean;
+  untrusted_signer?: boolean;
+  signer_not_pinned?: boolean;
   headline: string;
 }
 

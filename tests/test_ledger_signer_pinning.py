@@ -82,10 +82,10 @@ def test_a_pin_that_is_not_an_ed25519_key_is_rejected(tmp_path: Path) -> None:
 # --- the library verdict -------------------------------------------------------------
 
 
-def test_forged_ledger_passes_without_a_pin_but_names_its_signer(tmp_path: Path) -> None:
-    """Unpinned, a re-sealed ledger is internally consistent - and says whose key that is."""
+def test_forged_ledger_accepted_unpinned_still_names_its_signer(tmp_path: Path) -> None:
+    """Accepted unpinned by explicit consent, a re-seal is consistent - and says whose key."""
     records, signed_root = load_ledger(_forge(tmp_path))
-    result = verify_ledger(records, signed_root)
+    result = verify_ledger(records, signed_root, allow_unpinned=True)
 
     assert result.integrity_ok and result.signature_ok
     assert result.signer_pinned is False
@@ -153,7 +153,7 @@ class TestExitCodes:
     def test_fingerprint_is_printed_even_without_a_pin(
         self, run, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        assert run([str(EXAMPLE)]) == EXIT_OK
+        assert run([str(EXAMPLE), "--allow-unpinned"]) == EXIT_OK
         assert "signer_sha256 = " in capsys.readouterr().out
 
     def test_unreadable_pin_is_a_usage_error(

@@ -97,11 +97,13 @@ def test_ledger_verify_detects_tampering() -> None:
     records = [{"type": "classification", "checksum": "abc"}, {"type": "c2pa", "sha256": "def"}]
     signed_root = Ledger(records).seal(_TEST_KEY).model_dump(mode="json", exclude_none=True)
 
-    ok = client.post("/api/ledger/verify", json={"records": records, "signed_root": signed_root})
+    pin = signed_root["public_key"]
+    body = {"records": records, "signed_root": signed_root, "expected_public_key": pin}
+    ok = client.post("/api/ledger/verify", json=body)
     assert ok.json()["verified"] is True
 
     tampered = [{"type": "classification", "checksum": "XXX"}, records[1]]
-    bad = client.post("/api/ledger/verify", json={"records": tampered, "signed_root": signed_root})
+    bad = client.post("/api/ledger/verify", json={**body, "records": tampered})
     assert bad.json()["verified"] is False  # tamper-evident through the HTTP layer
 
 

@@ -24,7 +24,8 @@ never hardcoded, so it can be reviewed and replaced.
 - **A pin is only as good as the channel it came from.** `attestor ledger verify
   --public-key` rejects a ledger sealed by any other key (`UNTRUSTED SIGNER`, exit 3). The
   pinned key has to reach the verifier by a channel the ledger's holder does not control;
-  without a pin, only consistency is checked and the output says `signer not pinned`.
+  without a pin, the verdict is `SIGNER NOT PINNED` (exit 4), and `--allow-unpinned` is the
+  explicit way to accept a ledger on consistency alone.
   See [`ledger.md`](ledger.md#pinning-the-signer).
 - **Sealing a root may reach the network; verification never does.** An RFC 3161 timestamp
   has to be fetched from a timestamping authority. `tests/test_architecture.py` confines
