@@ -115,16 +115,21 @@ class LedgerVerifyRequest(BaseModel):
 
     records: list[dict[str, Any]]
     signed_root: SignedRoot
-    # Raw hex of the key the ledger must be signed with. Optional, like --public-key:
-    # without it only consistency is checked, and the response says so.
+    # Raw hex of the key the ledger must be signed with, like --public-key. Without it
+    # the verdict is "signer not pinned" (verified: false) unless allow_unpinned is set,
+    # like --allow-unpinned.
     expected_public_key: str | None = None
+    allow_unpinned: bool = False
 
 
 @router.post("/ledger/verify")
 def ledger_verify_endpoint(request: LedgerVerifyRequest) -> dict[str, Any]:
     """Verify a ledger offline from public artifacts (F6): tamper check vs TSA trust apart."""
     result = verify_ledger(
-        request.records, request.signed_root, expected_public_key=request.expected_public_key
+        request.records,
+        request.signed_root,
+        expected_public_key=request.expected_public_key,
+        allow_unpinned=request.allow_unpinned,
     )
     return ledger_report(result)
 

@@ -28,12 +28,15 @@ def verify_ledger(
     tsa_leaf: x509.Certificate | None = None,
     tsa_root: x509.Certificate | None = None,
     expected_public_key: str | None = None,
+    allow_unpinned: bool = False,
 ) -> LedgerVerification:
     """Verify a ledger from public artifacts alone (no private key, no network).
 
     ``expected_public_key`` (raw hex) pins the signer. Without it the signature is only
     checked against the key the ledger carries, which proves consistency but not who
-    sealed it; the result always reports that key's fingerprint so it can be compared.
+    sealed it, so the verdict is "signer not pinned" and ``verified`` is False - unless
+    ``allow_unpinned`` accepts that explicitly. The signing key's fingerprint is always
+    reported so it can be compared by hand.
     """
     integrity_ok = _verify_integrity(records, signed_root)
     signature_ok = _verify_signature(signed_root)
@@ -78,6 +81,7 @@ def verify_ledger(
         signer_fingerprint=signer_fingerprint,
         signer_pinned=signer_pinned,
         signer_matches_pin=signer_matches_pin,
+        unpinned_allowed=allow_unpinned and not signer_pinned,
     )
 
 

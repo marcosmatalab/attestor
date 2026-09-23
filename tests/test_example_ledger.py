@@ -37,7 +37,7 @@ def test_no_private_key_is_committed() -> None:
 
 def test_the_committed_example_verifies(loaded) -> None:
     records, signed_root = loaded
-    result = verify_ledger(records, signed_root)
+    result = verify_ledger(records, signed_root, expected_public_key=signed_root.public_key)
 
     assert result.verified is True
     assert result.integrity_ok is True

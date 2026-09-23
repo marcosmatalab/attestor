@@ -58,7 +58,7 @@ def test_sealed_log_verifies_offline() -> None:
     log = _populated_log()
     signed = log.seal(_TEST_KEY)
 
-    result = verify_log(log.records, signed)
+    result = verify_log(log.records, signed, expected_public_key=signed.public_key)
     assert result.verified is True
     assert result.integrity_ok is True
     assert result.signature_ok is True
@@ -71,7 +71,7 @@ def test_tampering_with_an_event_breaks_verification() -> None:
     tampered = [dict(r) for r in log.records]
     tampered[0]["detail"] = {"description": "nothing to see here"}
 
-    result = verify_log(tampered, signed)
+    result = verify_log(tampered, signed, expected_public_key=signed.public_key)
     assert result.integrity_ok is False  # tamper-evident
     assert result.verified is False
 
@@ -86,3 +86,11 @@ def test_biometric_event_carries_art12_3_fields() -> None:
 def test_seal_is_deterministic() -> None:
     # Same events + same key -> same Merkle root and same signature.
     assert _populated_log().seal(_TEST_KEY) == _populated_log().seal(_TEST_KEY)
+
+
+def test_an_unpinned_log_is_not_a_pass() -> None:
+    log = _populated_log()
+    signed = log.seal(_TEST_KEY)
+
+    assert verify_log(log.records, signed).signer_not_pinned is True
+    assert verify_log(log.records, signed, allow_unpinned=True).verified is True

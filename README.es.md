@@ -144,7 +144,7 @@ flowchart LR
    puede llevar un sello de tiempo RFC 3161.
 4. **Verificar.** Cualquiera con la carpeta del registro y la clave pública del operador ejecuta
    `attestor ledger verify --public-key`, sin clave privada y sin red, y obtiene un código de
-   salida: `0` íntegro, `1` manipulado, `3` sellado por otra persona.
+   salida: `0` íntegro, `1` manipulado, `3` sellado por otra persona, `4` sin clave fijada.
 
 <details>
 <summary><b>🏛️ Arquitectura completa por módulos</b></summary>
@@ -198,7 +198,7 @@ Attestor existe para responder a una de ellas **con pruebas, no con promesas**:
 |---|---|---|
 | ❓ *¿Qué decidieron y por qué?* | Una clase de riesgo y una lista de obligaciones, cada una con su artículo | Un motor de reglas sobre reglas YAML versionadas que un jurista puede revisar regla a regla |
 | ❓ *¿Con qué versión de la ley?* | Cada resultado indica su bundle regulatorio y el SHA-256 de ese bundle | Los bundles están congelados; un cambio en la ley es un fichero nuevo, nunca una edición |
-| ❓ *¿Pueden demostrar que no se cambió después?* | Un registro firmado que cualquiera verifica sin conexión con la clave pública que publica el operador | Ed25519 + árbol Merkle RFC 6962 + RFC 3161, con código de salida `0`/`1`/`3` |
+| ❓ *¿Pueden demostrar que no se cambió después?* | Un registro firmado que cualquiera verifica sin conexión con la clave pública que publica el operador | Ed25519 + árbol Merkle RFC 6962 + RFC 3161, con código de salida `0`/`1`/`3`/`4` |
 
 **¿Por qué no preguntarle a un LLM?** Porque una respuesta de cumplimiento es **evidencia**, y
 la evidencia tiene que salir idéntica cuando otra persona la recalcula meses después. Un modelo
@@ -239,7 +239,8 @@ attestor demo
 > registro distingue **«la evidencia se modificó después del sellado»** de **«la firma no
 > corresponde a la raíz»**: dos fallos distintos, que se señalan por separado. Volver a sellar
 > registros editados con otra clave supera ambos controles, y eso es lo que detecta la clave
-> fijada: `UNTRUSTED SIGNER`, exit `3`. La huella de la clave es `21ffc076…5544`;
+> fijada: `UNTRUSTED SIGNER`, exit `3`. Sin clave, la respuesta es `SIGNER NOT PINNED`, exit
+> `4`: ningún `0` sin haber fijado el firmante. La huella de la clave es `21ffc076…5544`;
 > [`examples/ledger/`](examples/ledger) lo explica.
 
 ```mermaid
@@ -280,6 +281,7 @@ sequenceDiagram
 | 🕵️ Un tercero verifica el registro sin conexión | `attestor ledger verify examples/ledger --public-key examples/ledger/public_key.pem` | `ledger VERIFIED …; signer pinned`, exit 0, sin red |
 | 🚨 La manipulación se detecta | cambia un byte de `examples/ledger/records.json` y repite | `ledger TAMPERED …`, exit 1 |
 | 🔏 Un registro resellado con otra clave se detecta | `pytest tests/test_ledger_signer_pinning.py` | Edita, vuelve a sellar con una clave nueva y fija la original: `UNTRUSTED SIGNER`, exit 3 |
+| 🔑 Ningún exit 0 sin firmante fijado | `attestor ledger verify examples/ledger` | `SIGNER NOT PINNED`, exit 4 (`--allow-unpinned` vuelve a dar 0 de forma explícita) |
 | 🪪 Integridad y confianza se notifican por separado | `attestor demo` | `integrity Valid …; signer UNTRUSTED …` (el certificado de demo se marca correctamente como no incluido en ninguna lista de confianza) |
 | 🌐 La suite completa se ejecuta sin red | `python scripts/run_offline.py` | 511 en verde, toda conexión saliente rechazada |
 

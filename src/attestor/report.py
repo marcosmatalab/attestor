@@ -26,4 +26,5 @@ def ledger_report(result: LedgerVerification) -> dict[str, Any]:
         verified=result.verified,
         tampered=result.tampered,
         untrusted_signer=result.untrusted_signer,
+        signer_not_pinned=result.signer_not_pinned,
     )
