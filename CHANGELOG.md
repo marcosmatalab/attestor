@@ -10,6 +10,51 @@ moved because the legislator moved it or because we did.
 Full regulatory detail, bundle by bundle, is in
 [`docs/regulatory-changelog.md`](docs/regulatory-changelog.md).
 
+## [0.2.0] — 2026-09-23
+
+A security fix that needed a new feature to land, plus three corrections. **Why 0.2.0:**
+`--public-key` and exit code `3` are new, backward-compatible functionality, which
+Semantic Versioning puts in a MINOR release; a PATCH may not add features. It is not a
+MAJOR change: exit codes `0`, `1` and `2` keep their meaning, and nothing was removed.
+
+### Security
+
+- **The ledger verifier trusted any signer.** It checked the signature with the public key
+  stored inside `signed_root.json`, so records edited and re-sealed with a fresh key
+  verified as `VERIFIED`, exit 0. `attestor ledger verify DIR --public-key FILE` (and the
+  same flag on `python -m attestor.ledger`) now pins the expected key; a ledger sealed by
+  any other key is `UNTRUSTED SIGNER`, exit `3`. Tampering still outranks it (exit `1`).
+  The signing key's SHA-256 fingerprint is printed on every run. Without a pin, a
+  consistent ledger still exits `0` and says `signer not pinned`; the reasoning is in
+  [`docs/ledger.md`](docs/ledger.md#pinning-the-signer). (#26)
+
+### Added
+
+- `examples/ledger/public_key.pem`, the key that signed the example ledger, written by
+  `scripts/make_example_ledger.py`. Its fingerprint,
+  `21ffc076b7eef2cce6884e0c6b382a9ad72e4ba3d4b7a971cc1f601a8bac5544`, is also stated in
+  `examples/ledger/README.md` and in these release notes. (#26)
+- `expected_public_key` on `POST /api/ledger/verify`, and `tampered` / `untrusted_signer`
+  in its response. The demo pins the key it sealed with. (#26)
+
+### Fixed
+
+- `attestor demo` no longer starts with a `StarletteDeprecationWarning`. It reached the
+  pipeline through FastAPI's test client; the pipeline now lives in `attestor.demo` and
+  both the CLI and `POST /api/demo/run` call it directly. A plain `pip install` is enough
+  to run it; the `dev` extra is no longer needed for the demo. (#27)
+- The demo's C2PA AI-disclosure label names `example-model` instead of a commercial model
+  the project does not use. (#28)
+- The docs dated the in-force bundle to 2026-07-27 and said absorbing it changed no engine
+  code. `git log` adds it on 2026-09-22 in `66ec7c9`, a commit that also edited
+  `classifier/timeline.py`, `classifier/bundle.py` and `annexiv/*`; the docs now say so,
+  and a test checks them against the history. (#29)
+- `docs/dashboard.png` re-captured: it showed the ledger headline from before the pin. (#30)
+
+### Changed
+
+- Installation is from a tagged release on GitHub; nothing is published to a package index.
+
 ## [0.1.0] — 2026-09-23
 
 First tagged release. The engine has been working since June 2026; this is the point at

@@ -96,7 +96,7 @@ attestor classify --role provider                                  # herramienta
 
 | ✅ Tests Python | 📈 Cobertura | 🧪 Tests frontend | 🔎 Errores de tipos | 🧹 Código muerto | ⚓ Digests anclados |
 |:---:|:---:|:---:|:---:|:---:|:---:|
-| **417** en verde | **97 %** (umbral CI: 95 %) | **20** en verde | **0** · mypy strict | **0** hallazgos | **27** SHA-256 literales |
+| **511** en verde | **97 %** (umbral CI: 95 %) | **20** en verde | **0** · mypy strict | **0** hallazgos | **27** SHA-256 literales |
 
 | 🤖 LLMs en la decisión | 🌐 Llamadas de red al verificar | 📜 Escenarios regulatorios | 🔁 Misma entrada, misma salida |
 |:---:|:---:|:---:|:---:|
@@ -198,7 +198,7 @@ Attestor existe para responder a una de ellas **con pruebas, no con promesas**:
 |---|---|---|
 | ❓ *¿Qué decidieron y por qué?* | Una clase de riesgo y una lista de obligaciones, cada una con su artículo | Un motor de reglas sobre reglas YAML versionadas que un jurista puede revisar regla a regla |
 | ❓ *¿Con qué versión de la ley?* | Cada resultado indica su bundle regulatorio y el SHA-256 de ese bundle | Los bundles están congelados; un cambio en la ley es un fichero nuevo, nunca una edición |
-| ❓ *¿Pueden demostrar que no se cambió después?* | Un registro firmado que cualquiera verifica sin conexión con la clave pública que publica el operador | Ed25519 + árbol Merkle RFC 6962 + RFC 3161, con código de salida `0`/`1` |
+| ❓ *¿Pueden demostrar que no se cambió después?* | Un registro firmado que cualquiera verifica sin conexión con la clave pública que publica el operador | Ed25519 + árbol Merkle RFC 6962 + RFC 3161, con código de salida `0`/`1`/`3` |
 
 **¿Por qué no preguntarle a un LLM?** Porque una respuesta de cumplimiento es **evidencia**, y
 la evidencia tiene que salir idéntica cuando otra persona la recalcula meses después. Un modelo
@@ -207,11 +207,12 @@ ningún LLM, y un test hace fallar la CI si alguna vez se importa en él un SDK 
 
 ## 🚀 Pruébalo en 60 segundos
 
-Sin clave privada, sin configuración y sin red tras la instalación:
+Se instala desde la versión etiquetada (no se publica en ningún índice de paquetes). Sin
+clave privada, sin configuración y sin red tras la instalación:
 
 ```bash
-git clone https://github.com/marcosmatalab/attestor.git && cd attestor
-pip install -e ".[dev]"
+git clone --branch v0.2.0 https://github.com/marcosmatalab/attestor.git && cd attestor
+pip install -e .
 
 # 1️⃣  Verifica sin conexión el registro incluido, fijando la clave que lo firmó
 attestor ledger verify examples/ledger --public-key examples/ledger/public_key.pem
@@ -280,7 +281,7 @@ sequenceDiagram
 | 🚨 La manipulación se detecta | cambia un byte de `examples/ledger/records.json` y repite | `ledger TAMPERED …`, exit 1 |
 | 🔏 Un registro resellado con otra clave se detecta | `pytest tests/test_ledger_signer_pinning.py` | Edita, vuelve a sellar con una clave nueva y fija la original: `UNTRUSTED SIGNER`, exit 3 |
 | 🪪 Integridad y confianza se notifican por separado | `attestor demo` | `integrity Valid …; signer UNTRUSTED …` (el certificado de demo se marca correctamente como no incluido en ninguna lista de confianza) |
-| 🌐 La suite completa se ejecuta sin red | `python scripts/run_offline.py` | 417 en verde, toda conexión saliente rechazada |
+| 🌐 La suite completa se ejecuta sin red | `python scripts/run_offline.py` | 511 en verde, toda conexión saliente rechazada |
 
 Cada uno de estos controles se ha comprobado rompiéndolo a propósito: un `import httpx` en el
 clasificador hace fallar el test de arquitectura, una fecha editada hace fallar nueve anclas de
@@ -339,10 +340,10 @@ uno es el adecuado para un sistema de evidencias:
 
 | | Medido | Comando |
 |---|---|---|
-| 🧪 Tests Python | **417 en verde** | `pytest` |
-| 📈 Cobertura | **97 %** de 1.178 instrucciones, umbral de CI en el 95 % | `make test` |
+| 🧪 Tests Python | **511 en verde** | `pytest` |
+| 📈 Cobertura | **97 %** de 1.254 instrucciones, umbral de CI en el 95 % | `make test` |
 | ⚛️ Tests frontend | **20 en verde** en 7 ficheros | `cd web && npm test` |
-| 🔎 Tipos | mypy **strict, 0 errores** en 36 módulos | `mypy src/attestor` |
+| 🔎 Tipos | mypy **strict, 0 errores** en 38 módulos | `mypy src/attestor` |
 | 🧹 Código muerto | **0 hallazgos** | `vulture src tests --min-confidence 80` |
 | ✨ Lint y formato | limpio, `ruff` fijado a versión exacta | `ruff check . && ruff format --check .` |
 
