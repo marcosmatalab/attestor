@@ -1,6 +1,7 @@
 # Attestor
 
 [![CI](https://github.com/marcosmatalab/attestor/actions/workflows/ci.yml/badge.svg)](https://github.com/marcosmatalab/attestor/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/marcosmatalab/attestor)](https://github.com/marcosmatalab/attestor/releases)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 **A deterministic EU AI Act compliance engine: the classification decision is a rule
@@ -56,15 +57,13 @@ RFC 3161) that a third party can verify offline.
 
 One caveat belongs up here rather than in a footnote: **sealing a root may reach the
 network**, because an RFC 3161 timestamp has to be fetched from a timestamping authority.
-**Verification never does** — and that is enforced, not promised:
-`tests/test_architecture.py` confines network imports to `ledger/timestamp.py` and asserts
-that no verifier imports a network client. So `grep urllib src/` finds one hit, in the one
-place a trusted timestamp cannot avoid it.
+**Verification never does** — enforced, not promised: `tests/test_architecture.py` confines
+network imports to `ledger/timestamp.py` and asserts that no verifier imports a network
+client. So `grep urllib src/` finds one hit, in the one place a timestamp cannot avoid it.
 
 ## Every claim, and the command that proves it
 
-Each property this repository is sold on is a row here, with the command that checks it in
-ten seconds.
+Every property this repository is sold on is a row, with the command that checks it.
 
 | Claim | Command | Expected result |
 |---|---|---|
@@ -90,8 +89,8 @@ the screenshot's sidecar fails the capture test.
 The Digital Omnibus on AI is **in force**: Reg. (EU) 2026/1744, adopted 29 June 2026,
 published in the OJEU on 24 July and binding since **27 July 2026**. It moves Annex III
 high-risk obligations to **2 Dec 2027** and Annex I embedded systems to **2 Aug 2028**.
-Attestor ships three bundles and shows both timelines, because knowing what changed is part
-of the answer:
+Attestor ships three bundles and shows both timelines, because what changed is part of the
+answer:
 
 | Bundle | What it is | Status |
 |---|---|---|
@@ -219,6 +218,7 @@ and compliance. These limits are the specification, not an apology:
 | [`docs/governance.md`](docs/governance.md) | 42001 crosswalk, FRIA scaffold, Art. 12 logs |
 | [`docs/api.md`](docs/api.md), [`docs/roadmap.md`](docs/roadmap.md) | The endpoints and the dashboard; what each build phase delivered |
 | [`docs/README.md`](docs/README.md) | How the screenshot above is captured, and why it cannot go stale |
+| [`CHANGELOG.md`](CHANGELOG.md) | Releases, and separately the dates the law itself moved |
 
 ## Stack
 
