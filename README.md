@@ -2,26 +2,22 @@
 
 # 🛡️ Attestor
 
-### EU AI Act risk classification and compliance evidence, verifiable by anyone.
-
-**Describe an AI system → get its legal risk class, its obligations and their deadlines, a
-ready-to-complete Annex IV technical dossier, and a cryptographic receipt anyone can verify offline.**
-
-🇬🇧 **English** · [🇪🇸 Español](README.es.md)
-
 [![CI](https://github.com/marcosmatalab/attestor/actions/workflows/ci.yml/badge.svg)](https://github.com/marcosmatalab/attestor/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/marcosmatalab/attestor?color=2563eb&label=release)](https://github.com/marcosmatalab/attestor/releases)
 [![Python](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-16a34a)](LICENSE)
 
-![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
-![Next.js](https://img.shields.io/badge/Next.js_16-000000?logo=nextdotjs&logoColor=white)
-![React](https://img.shields.io/badge/React_19-20232A?logo=react&logoColor=61DAFB)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
-![C2PA](https://img.shields.io/badge/C2PA-Content_Credentials-7c3aed)
-![Ed25519](https://img.shields.io/badge/Ed25519-signatures-0f766e)
-![RFC 6962](https://img.shields.io/badge/RFC_6962-Merkle_tree-b45309)
-![RFC 3161](https://img.shields.io/badge/RFC_3161-timestamps-be123c)
+🇬🇧 **English** · [🇪🇸 Español](README.es.md)
+
+### EU AI Act risk classification and compliance evidence, verifiable by anyone.
+
+**Describe an AI system → get its legal risk class, its obligations and their deadlines, a
+ready-to-complete Annex IV technical dossier, and a cryptographic receipt anyone can verify offline.**
+
+![Attestor dashboard](docs/dashboard.png)
+
+<sub>A real screenshot of the running app. The checksum in it is the one <code>attestor classify</code>
+reproduces today, and a test fails CI if it ever drifts.</sub>
 
 </div>
 
@@ -36,15 +32,6 @@ ready-to-complete Annex IV technical dossier, and a cryptographic receipt anyone
 | 🔐 **Why it can be trusted** | Every result carries a **reproducible checksum** that can be sealed in a **cryptographic ledger** (Ed25519-signed Merkle tree, optional RFC 3161 timestamp). An auditor verifies it **offline**, with one command. |
 | 🖼️ **Plus** | Signs AI-generated content with **C2PA Content Credentials** (the machine-readable marking of Art. 50(2)) and maps the result to **ISO/IEC 42001**, the **Fundamental Rights Impact Assessment** (FRIA, Art. 27) and **Art. 12** logging. |
 | 👥 **Who it's for** | Teams that **build** AI systems (providers), organisations that **use** them (deployers such as banks, insurers or public bodies), and the **auditors** who have to check both. |
-
-<div align="center">
-
-![Attestor dashboard](docs/dashboard.png)
-
-<sub>A real screenshot of the running app. The checksum in it is the one <code>attestor classify</code>
-reproduces today, and a test fails CI if it ever drifts.</sub>
-
-</div>
 
 ## 💡 In plain words
 
