@@ -4,7 +4,7 @@
 .DEFAULT_GOAL := help
 PYTHON ?= python
 
-.PHONY: help install check lint format typecheck deadcode test demo ledger web clean
+.PHONY: help install check lint format typecheck deadcode test demo ledger web capture clean
 
 help:  ## Show this help
 	@grep -E '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "};{printf "  %-12s %s\n", $$1, $$2}'
@@ -39,5 +39,10 @@ ledger:  ## Verify the committed example ledger offline
 web:  ## Frontend gates: lint, build, typecheck, vitest (build first: Next emits the types tsc needs)
 	cd web && npm run lint && npm run build && npm run typecheck && npm test
 
+capture:  ## Re-shoot docs/dashboard.png from the running app (needs the capture extra)
+	$(PYTHON) -m pip install -e ".[capture]"
+	$(PYTHON) -m playwright install chromium
+	$(PYTHON) scripts/capture_dashboard.py
+
 clean:  ## Remove caches and build output
-	rm -rf .pytest_cache .ruff_cache .mypy_cache .coverage dist build web/.next web/out
+	rm -rf .pytest_cache .ruff_cache .mypy_cache .coverage .capture dist build web/.next web/out
