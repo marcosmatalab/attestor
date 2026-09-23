@@ -18,20 +18,23 @@
   --on-accent: #ffffff;
   --focus: #6366f1;
 
+  /* Risk tiers. Every foreground clears WCAG AA (4.5:1) against its own background
+     at the badge's 12px: these are 12px bold labels, which is below the large-text
+     threshold, so 3:1 is not enough. Measured, not eyeballed. */
   /* risk tiers */
   --risk-prohibited: #b91c1c;
   --risk-prohibited-bg: #fdecec;
-  --risk-high: #b45309;
+  --risk-high: #9a4404;
   --risk-high-bg: #fdeede;
   --risk-limited: #92610e;
   --risk-limited-bg: #fcf6dd;
-  --risk-minimal: #15803d;
+  --risk-minimal: #136c34;
   --risk-minimal-bg: #e6f4ea;
 
   /* status (trust / verification) */
-  --ok: #15803d;
+  --ok: #136c34;
   --ok-bg: #e6f4ea;
-  --warn: #b45309;
+  --warn: #9a4404;
   --warn-bg: #fdeede;
 
   /* callouts */
@@ -177,6 +180,8 @@ main {
 .mono {
   font-family: var(--font-mono);
   font-variant-ligatures: none;
+  /* Digits keep one advance width, so a 64-hex digest never shifts between renders. */
+  font-variant-numeric: tabular-nums;
   font-feature-settings: "ss02" off;
 }
 

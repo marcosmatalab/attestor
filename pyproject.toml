@@ -51,6 +51,11 @@ dev = [
     "types-reportlab==5.0.0.20260911",
     "types-PyYAML==6.0.12.20260906",
 ]
+# Deliberately NOT in `dev`. Re-capturing docs/dashboard.png needs a real browser, which
+# is a ~150 MB download; CI runs the two capture tests, and neither of them opens one.
+capture = [
+    "playwright==1.58.0",
+]
 
 [project.scripts]
 attestor = "attestor.cli:main"
