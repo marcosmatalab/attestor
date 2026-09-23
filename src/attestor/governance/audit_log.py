@@ -76,6 +76,21 @@ class Art12Log:
         return self._ledger.seal(private_key)
 
 
-def verify_log(records: list[dict[str, Any]], signed_root: SignedRoot) -> LedgerVerification:
-    """Verify a sealed Art. 12 log offline (delegates to the F6 ledger verifier)."""
-    return verify_ledger(records, signed_root)
+def verify_log(
+    records: list[dict[str, Any]],
+    signed_root: SignedRoot,
+    *,
+    expected_public_key: str | None = None,
+    allow_unpinned: bool = False,
+) -> LedgerVerification:
+    """Verify a sealed Art. 12 log offline (delegates to the F6 ledger verifier).
+
+    Same contract as the ledger: without ``expected_public_key`` the verdict is "signer
+    not pinned" unless ``allow_unpinned`` accepts any signer explicitly.
+    """
+    return verify_ledger(
+        records,
+        signed_root,
+        expected_public_key=expected_public_key,
+        allow_unpinned=allow_unpinned,
+    )

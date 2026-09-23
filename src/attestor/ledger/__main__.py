@@ -1,19 +1,23 @@
-"""Offline ledger verifier CLI: ``python -m attestor.ledger <ledger_dir> [--public-key FILE]``.
+"""Offline ledger verifier CLI.
+
+    python -m attestor.ledger <ledger_dir> (--public-key FILE | --allow-unpinned)
 
 Consumes only PUBLIC artifacts (``records.json``, ``signed_root.json``, and optional
 ``tsa/leaf.pem`` + ``tsa/root.pem``) — no network and no private key.
 
 Exit codes are a contract:
 
-- ``0`` intact and signed (and, with ``--public-key``, signed by that key);
+- ``0`` intact and signed by the pinned key (or, with ``--allow-unpinned``, by any key);
 - ``1`` tampered: the records or the signed root do not hold together;
 - ``2`` usage or I/O error;
-- ``3`` untrusted signer: intact and signed, but NOT by the pinned key.
+- ``3`` untrusted signer: intact and signed, but NOT by the pinned key;
+- ``4`` signer not pinned: intact and signed, but no ``--public-key`` was given.
 
-``3`` exists because a ledger re-sealed by someone else is internally consistent: the
-signature is checked with the key stored next to it. Only a pinned key tells "sealed by
-the operator" apart from "sealed by whoever edited the records". TSA trust is reported
-but NEVER drives the exit code: a valid ledger timestamped by an unrecognised TSA is 0.
+``3`` and ``4`` exist because a ledger re-sealed by someone else is internally
+consistent: the signature is checked with the key stored next to it. Only a pinned key
+tells "sealed by the operator" apart from "sealed by whoever edited the records", so a
+run without one is not a pass unless ``--allow-unpinned`` says so explicitly. Tampering
+outranks both. TSA trust is reported but NEVER drives the exit code.
 """
 
 import argparse
@@ -30,10 +34,12 @@ EXIT_OK = 0
 EXIT_TAMPERED = 1
 EXIT_USAGE = 2
 EXIT_UNTRUSTED_SIGNER = 3
+EXIT_SIGNER_NOT_PINNED = 4
 
-PUBLIC_KEY_HELP = (
-    "Ed25519 public key the ledger must be signed with (PEM or 64 hex characters); "
-    "without it the signature is only checked against the key the ledger carries"
+PUBLIC_KEY_HELP = "Ed25519 public key the ledger must be signed with (PEM or 64 hex characters)"
+ALLOW_UNPINNED_HELP = (
+    "accept a ledger signed by any key: exit 0 instead of 4 when no --public-key is given "
+    "(the signature is then only checked against the key the ledger carries)"
 )
 
 
@@ -41,6 +47,7 @@ def add_verify_arguments(parser: argparse.ArgumentParser) -> None:
     """The arguments both entry points share, so they cannot drift apart."""
     parser.add_argument("directory", help="ledger directory, e.g. examples/ledger")
     parser.add_argument("--public-key", metavar="FILE", help=PUBLIC_KEY_HELP)
+    parser.add_argument("--allow-unpinned", action="store_true", help=ALLOW_UNPINNED_HELP)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -52,11 +59,16 @@ def main(argv: list[str] | None = None) -> int:
         args = parser.parse_args(sys.argv[1:] if argv is None else argv)
     except SystemExit as exc:  # argparse exits 2 on bad usage; keep it a return value
         return EXIT_USAGE if exc.code else EXIT_OK
-    return verify_directory(Path(args.directory), args.public_key)
+    return verify_directory(Path(args.directory), args.public_key, args.allow_unpinned)
 
 
-def verify_directory(directory: Path, public_key: str | None = None) -> int:
+def verify_directory(
+    directory: Path, public_key: str | None = None, allow_unpinned: bool = False
+) -> int:
     """Verify ``directory``, print the verdict and return the exit code."""
+    if public_key is not None and allow_unpinned:
+        print("--public-key and --allow-unpinned are mutually exclusive", file=sys.stderr)
+        return EXIT_USAGE
     expected = None
     if public_key is not None:
         try:
@@ -78,7 +90,12 @@ def verify_directory(directory: Path, public_key: str | None = None) -> int:
         tsa_root = x509.load_pem_x509_certificate(root_path.read_bytes())
 
     result = verify_ledger(
-        records, signed_root, tsa_leaf=tsa_leaf, tsa_root=tsa_root, expected_public_key=expected
+        records,
+        signed_root,
+        tsa_leaf=tsa_leaf,
+        tsa_root=tsa_root,
+        expected_public_key=expected,
+        allow_unpinned=allow_unpinned,
     )
     print(result.headline)
     print(f"  integrity_ok = {result.integrity_ok}")
@@ -93,6 +110,8 @@ def verify_directory(directory: Path, public_key: str | None = None) -> int:
         return EXIT_TAMPERED
     if result.untrusted_signer:
         return EXIT_UNTRUSTED_SIGNER
+    if result.signer_not_pinned:
+        return EXIT_SIGNER_NOT_PINNED
     return EXIT_OK
 
 
