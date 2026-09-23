@@ -63,21 +63,52 @@ class LedgerVerification(BaseModel):
     tsa_trusted: bool = False  # TSA is a recognised authority (no list shipped -> False)
     gen_time: str | None = None
     detail: str = ""
+    # --- SIGNER: whose key made the signature. The signature is checked with the key
+    #     stored in signed_root.json, so on its own it proves consistency, not identity:
+    #     anyone who re-seals edited records with a fresh key gets a valid signature.
+    #     Pinning the expected key is what turns "a valid signature" into "HIS signature". ---
+    signer_fingerprint: str = ""  # SHA-256 of the raw signing key, always reported
+    signer_pinned: bool = False  # the caller named the key it expects
+    signer_matches_pin: bool = False  # ...and the ledger was signed by exactly that key
+
+    @property
+    def tampered(self) -> bool:
+        """The records or the signed root do not hold together. Always the worst verdict."""
+        return not (self.integrity_ok and self.signature_ok)
+
+    @property
+    def untrusted_signer(self) -> bool:
+        """Internally consistent, but sealed by a key other than the pinned one."""
+        return not self.tampered and self.signer_pinned and not self.signer_matches_pin
 
     @property
     def verified(self) -> bool:
-        """True iff the ledger is intact and signed. NOT gated on TSA trust."""
-        return self.integrity_ok and self.signature_ok
+        """Intact, signed, and - when a key was pinned - signed by that key.
+
+        NOT gated on TSA trust. Without a pin this keeps its original meaning (intact and
+        signed by the key the ledger carries); the headline says so explicitly.
+        """
+        return not self.tampered and not self.untrusted_signer
 
     @property
     def headline(self) -> str:
         """One line that never conflates 'untrusted TSA' with 'tampered ledger'."""
-        if not self.verified:
+        if self.tampered:
             return (
                 "ledger TAMPERED - "
                 f"integrity_ok={self.integrity_ok}, signature_ok={self.signature_ok}"
             )
-        core = "ledger VERIFIED (Merkle root intact, Ed25519 signature valid)"
+        if self.untrusted_signer:
+            return (
+                "ledger UNTRUSTED SIGNER - records intact and signed, "
+                "but by a key other than the pinned one"
+            )
+        signer = (
+            "signer pinned"
+            if self.signer_pinned
+            else "signer not pinned: compare signer_sha256 with the published key"
+        )
+        core = f"ledger VERIFIED (Merkle root intact, Ed25519 signature valid; {signer})"
         if not self.has_timestamp:
             return f"{core}; no timestamp"
         if not self.timestamp_ok:

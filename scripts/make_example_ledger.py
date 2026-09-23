@@ -15,7 +15,10 @@ because there the point is the live pipeline rather than a stable artifact.
 The Ed25519 private key is generated into a temporary directory and never written
 into the repository. Re-running therefore mints a new key and produces a different
 - and equally valid - signature; the committed files keep verifying regardless,
-which is the property that matters.
+which is the property that matters. The matching public key is written next to them
+as ``public_key.pem`` so a verifier can pin it (``--public-key``); a re-run replaces
+it, and the fingerprint quoted in ``examples/ledger/README.md`` must then be updated,
+which ``tests/test_ledger_signer_pinning.py`` enforces.
 
     python scripts/make_example_ledger.py [output_dir]
 """
@@ -35,6 +38,7 @@ from attestor.ledger import (
     save_ledger,
     verify_ledger,
 )
+from attestor.ledger.keys import public_key_fingerprint, public_key_pem
 from attestor.provenance import ProvenanceMetadata, build_manifest
 
 DEFAULT_OUTPUT = Path("examples/ledger")
@@ -77,6 +81,13 @@ def build_records() -> list[dict[str, Any]]:
     ]
 
 
+def write_public_key(output: Path, public_key_hex: str) -> Path:
+    """Publish the verifying key as ``public_key.pem``, the file ``--public-key`` pins."""
+    path = output / "public_key.pem"
+    path.write_bytes(public_key_pem(public_key_hex))
+    return path
+
+
 def main(argv: list[str] | None = None) -> int:
     """Write the example ledger to the output directory (default ``examples/ledger``)."""
     args = list(sys.argv[1:] if argv is None else argv)
@@ -92,11 +103,13 @@ def main(argv: list[str] | None = None) -> int:
         signed_root = Ledger(records).seal(load_private_key(key_path))
 
     save_ledger(output, records, signed_root)
-    result = verify_ledger(records, signed_root)
+    write_public_key(output, signed_root.public_key)
+    result = verify_ledger(records, signed_root, expected_public_key=signed_root.public_key)
 
     print(f"wrote {output} ({signed_root.leaf_count} records)")
     print(f"  merkle_root = {signed_root.merkle_root}")
     print(f"  public_key  = {signed_root.public_key}")
+    print(f"  signer_sha256 = {public_key_fingerprint(signed_root.public_key)}")
     print(f"  {result.headline}")
     return 0 if result.verified else 1
 
