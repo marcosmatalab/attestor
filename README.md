@@ -94,7 +94,7 @@ attestor classify --role provider                                  # internal to
 
 | ✅ Python tests | 📈 Coverage | 🧪 Frontend tests | 🔎 Type errors | 🧹 Dead code | ⚓ Anchored digests |
 |:---:|:---:|:---:|:---:|:---:|:---:|
-| **417** passing | **97%** (CI gate: 95%) | **20** passing | **0** · mypy strict | **0** findings | **27** literal SHA-256 |
+| **511** passing | **97%** (CI gate: 95%) | **20** passing | **0** · mypy strict | **0** findings | **27** literal SHA-256 |
 
 | 🤖 LLMs in the decision | 🌐 Network calls during verification | 📜 Regulatory scenarios | 🔁 Same input, same output |
 |:---:|:---:|:---:|:---:|
@@ -196,7 +196,7 @@ Attestor exists to answer one of them **with proof rather than a promise**:
 |---|---|---|
 | ❓ *What did you decide, and why?* | A risk class and a list of obligations, each citing its article | A rule engine over versioned YAML rules that a lawyer can review rule by rule |
 | ❓ *Under which version of the law?* | Every result names its regulatory bundle and that bundle's SHA-256 | Bundles are frozen; a change in the law is a new file, never an edit |
-| ❓ *Can you prove it wasn't changed later?* | A signed ledger that anyone verifies offline against the operator's published public key | Ed25519 + RFC 6962 Merkle tree + RFC 3161, with a `0`/`1` exit code |
+| ❓ *Can you prove it wasn't changed later?* | A signed ledger that anyone verifies offline against the operator's published public key | Ed25519 + RFC 6962 Merkle tree + RFC 3161, with a `0`/`1`/`3` exit code |
 
 **Why not just ask an LLM?** Because a compliance answer is **evidence**, and evidence has to
 come out identical when someone else recomputes it months later. A language model cannot
@@ -205,11 +205,12 @@ fails CI if an LLM SDK is ever imported into it.
 
 ## 🚀 Try it in 60 seconds
 
-No private key, no configuration, and no network after install:
+Installed from the tagged release (nothing is published to a package index). No private
+key, no configuration, and no network after install:
 
 ```bash
-git clone https://github.com/marcosmatalab/attestor.git && cd attestor
-pip install -e ".[dev]"
+git clone --branch v0.2.0 https://github.com/marcosmatalab/attestor.git && cd attestor
+pip install -e .
 
 # 1️⃣  Verify the committed ledger offline, pinned to the key that signed it
 attestor ledger verify examples/ledger --public-key examples/ledger/public_key.pem
@@ -277,7 +278,7 @@ sequenceDiagram
 | 🚨 Tampering is detected | flip a byte in `examples/ledger/records.json`, re-run | `ledger TAMPERED …`, exit 1 |
 | 🔏 A ledger re-sealed with another key is caught | `pytest tests/test_ledger_signer_pinning.py` | Edit, re-seal with a fresh key, pin the original: `UNTRUSTED SIGNER`, exit 3 |
 | 🪪 Integrity and trust are reported separately | `attestor demo` | `integrity Valid …; signer UNTRUSTED …` (the demo certificate is correctly flagged as not on a trust list) |
-| 🌐 The full suite runs with no network | `python scripts/run_offline.py` | 417 passed, every outbound connection refused |
+| 🌐 The full suite runs with no network | `python scripts/run_offline.py` | 511 passed, every outbound connection refused |
 
 Each of these gates was proven by breaking it on purpose: `import httpx` in the classifier
 fails the architecture test, one edited date fails nine checksum anchors, one line removed
@@ -336,10 +337,10 @@ call for an evidence system:
 
 | | Measured | Command |
 |---|---|---|
-| 🧪 Python tests | **417 passed** | `pytest` |
-| 📈 Coverage | **97%** of 1,178 statements, CI gate at 95% | `make test` |
+| 🧪 Python tests | **511 passed** | `pytest` |
+| 📈 Coverage | **97%** of 1,254 statements, CI gate at 95% | `make test` |
 | ⚛️ Frontend tests | **20 passed** in 7 files | `cd web && npm test` |
-| 🔎 Types | mypy **strict, 0 errors** across 36 modules | `mypy src/attestor` |
+| 🔎 Types | mypy **strict, 0 errors** across 38 modules | `mypy src/attestor` |
 | 🧹 Dead code | **0 findings** | `vulture src tests --min-confidence 80` |
 | ✨ Lint and format | clean, `ruff` pinned exactly | `ruff check . && ruff format --check .` |
 
