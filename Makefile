@@ -25,8 +25,11 @@ typecheck:  ## mypy, strict
 deadcode:  ## Vulture
 	vulture src tests --min-confidence 80
 
+# The threshold sits at 95, two points below the 97 measured today, so a legitimate
+# refactor has room and a real regression still trips it. It lives here, not in addopts,
+# so that running a single test file with bare `pytest` is not failed for low coverage.
 test:  ## Pytest, with the coverage threshold
-	pytest
+	pytest --cov=src/attestor --cov-report=term-missing --cov-fail-under=95
 
 check: lint format typecheck deadcode test  ## Every gate CI runs, in CI's order
 

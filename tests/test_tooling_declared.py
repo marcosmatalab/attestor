@@ -14,11 +14,12 @@ So the Makefile is parsed rather than trusted: whatever `check` actually depends
 today is what must be declared, including gates added after this test was written.
 
 Scope, stated plainly. This covers two things: the tools the `check` target
-invokes, and the tools implied by pytest's `addopts` (a `--cov` flag needs
-pytest-cov, which no amount of Makefile parsing can see, because the Makefile only
-says `pytest`). It does not cover the stub packages - types-PyYAML,
-types-reportlab - because nothing declares them either; they are only felt when
-mypy runs, and a missing stub shows up as a mypy error, not as exit 127.
+invokes, and the plugins implied by the flags pytest is given - on the `test`
+recipe line or in `addopts` (a `--cov` flag needs pytest-cov, which the executable
+name alone cannot reveal, because the tool is still `pytest`). It does not cover the
+stub packages - types-PyYAML, types-reportlab - because nothing declares them
+either; they are only felt when mypy runs, and a missing stub shows up as a mypy
+error, not as exit 127.
 """
 
 import re
@@ -101,11 +102,16 @@ def test_every_tool_make_check_runs_is_declared_in_the_dev_extra() -> None:
     )
 
 
-def test_the_plugins_addopts_implies_are_declared_too() -> None:
-    """The Makefile says `pytest`; addopts is what makes that need pytest-cov."""
+def test_the_plugins_pytest_flags_imply_are_declared_too() -> None:
+    """The tool is `pytest` either way; its flags are what make it need pytest-cov.
+
+    The flags can come from two places, and both are read: the `test` recipe, where the
+    coverage gate lives today, and addopts, where it lived before and could return.
+    """
     config = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
     addopts = config["tool"]["pytest"]["ini_options"]["addopts"]
+    flags = " ".join([addopts, *recipe_of("test")])
     declared = declared_dev_dependencies()
 
-    if "--cov" in addopts:
-        assert "pytest-cov" in declared, "addopts passes --cov, so pytest-cov must be installed"
+    assert "--cov" in flags, "no --cov flag found, so this test would be checking nothing"
+    assert "pytest-cov" in declared, "pytest is run with --cov, so pytest-cov must be installed"

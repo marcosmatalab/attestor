@@ -86,6 +86,7 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-# The threshold sits at 95, two points below the 97 measured today, so a legitimate
-# refactor has room and a real regression still trips it.
-addopts = "-q --cov=src/attestor --cov-report=term-missing --cov-fail-under=95"
+# Coverage is not here on purpose. A floor in addopts applies to every invocation, so
+# `pytest tests/test_architecture.py` passed all its tests and still exited 1 on a 0%
+# total. The coverage gate lives in the Makefile's `test` target, which CI runs.
+addopts = "-q"

@@ -31,7 +31,7 @@ jobs:
       # running the same target here is the only way the Makefile is ever actually
       # tested -- and it removes the chance of the two lists drifting apart.
       # It runs, in order: ruff check, ruff format --check, mypy, vulture, pytest
-      # (whose addopts carry the coverage floor).
+      # with the coverage floor, which the Makefile's `test` target passes explicitly.
       - name: All gates (make check)
         run: make check
 
