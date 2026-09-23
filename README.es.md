@@ -2,7 +2,7 @@
 
 # 🛡️ Attestor
 
-### Cumplimiento automatizado del Reglamento Europeo de IA, con evidencias que cualquiera puede verificar sin conexión.
+### Clasificación de riesgo y evidencias de cumplimiento del Reglamento Europeo de IA, verificables por cualquiera.
 
 **Describe un sistema de IA → obtén su clase de riesgo legal, sus obligaciones y sus plazos, un
 expediente técnico del Anexo IV listo para completar y un recibo criptográfico que cualquiera puede verificar
@@ -36,6 +36,7 @@ sin conexión.**
 | 🧠 **Qué hace Attestor** | Un **motor de reglas** (sin LLM) convierte un cuestionario breve en una clase de riesgo, la lista de obligaciones aplicables y la fecha en que cada una es exigible, además del **expediente técnico del Anexo IV** (la documentación que exige el Reglamento) en PDF, con todas las citas legales verificadas. |
 | 🔐 **Por qué es fiable** | Cada resultado lleva un **checksum reproducible** que puede sellarse en un **registro criptográfico** (árbol Merkle firmado con Ed25519, sello de tiempo RFC 3161 opcional). Un auditor lo verifica **sin conexión**, con un solo comando. |
 | 🖼️ **Además** | Firma contenido generado por IA con **C2PA Content Credentials** (el marcado legible por máquina del art. 50(2)) y relaciona el resultado con **ISO/IEC 42001**, la **evaluación de impacto en los derechos fundamentales** (FRIA, art. 27) y el registro del **art. 12**. |
+| 👥 **Para quién** | Equipos que **desarrollan** sistemas de IA (proveedores), organizaciones que los **utilizan** (responsables del despliegue, como bancos, aseguradoras o administraciones públicas) y los **auditores** que tienen que revisar a ambos. |
 
 <div align="center">
 
@@ -45,6 +46,49 @@ sin conexión.**
 <code>attestor classify</code> reproduce hoy, y un test hace fallar la CI si alguna vez deja de coincidir.</sub>
 
 </div>
+
+## 💡 Dicho en claro
+
+Piensa en Attestor como **una calculadora de impuestos para la regulación de IA que, además,
+te entrega un justificante firmado que delata cualquier manipulación**.
+
+Respondes unas pocas preguntas sobre tu sistema de IA: si lo desarrollas o lo utilizas, para
+qué sirve, si conversa con personas, si genera imágenes o texto. Attestor te dice, con el
+artículo de la ley detrás de cada obligación:
+
+- 🚦 **qué nivel de riesgo le atribuye la ley,**
+- 📋 **qué estás obligado a hacer,**
+- 📅 **a partir de qué fecha,**
+- 🧾 y te entrega una **prueba firmada** de esa respuesta y de la versión de la ley que usó. Si
+  alguien edita un registro sellado, la verificación contra tu clave publicada falla. Con un
+  sello de tiempo RFC 3161, prueba también *cuándo*.
+
+**Resultados reales del motor**, con la ley en vigor (`reg-2026-1744`):
+
+| Escenario | Riesgo | Qué señala Attestor | Desde |
+|---|:---:|---|:---:|
+| 🧑‍💼 Una empresa vende una herramienta de IA que filtra currículos | 🟠 **Alto** | **13 obligaciones**: gestión de riesgos, gobernanza de datos, registros, supervisión humana, marcado CE… (arts. 9 a 17, 43 y 47 a 49) | 2 dic 2027 |
+| 🏦 Un banco utiliza un sistema de IA de calificación crediticia | 🟠 **Alto** | **2 obligaciones**: conservación de registros (art. 26(6)) y evaluación de impacto en los derechos fundamentales (art. 27) | 2 dic 2027 |
+| 💬 Un chatbot de atención al cliente | 🟡 **Limitado** | **1 obligación**: informar al usuario de que habla con una IA (art. 50(1)) | 2 ago 2026 |
+| 🗂️ Una herramienta interna sin nada de lo anterior | 🟢 **Mínimo** | Sin obligaciones específicas | — |
+
+<details>
+<summary>▶️ Reproduce cada fila</summary>
+
+```bash
+attestor classify --role provider --annex-iii-area employment      # filtro de currículos
+attestor classify --role deployer --annex-iii-area credit_scoring  # banco, calificación crediticia
+attestor classify --role provider --interacts-with-humans          # chatbot
+attestor classify --role provider                                  # herramienta interna
+```
+
+</details>
+
+> [!NOTE]
+> El filtro de currículos con la ley **en su texto original** (`--bundle v2026-08`) tiene las
+> mismas 13 obligaciones, exigibles el **2 ago 2026**. El Ómnibus Digital las retrasó 16 meses.
+> Attestor conserva todas las versiones de la ley que ha modelado y puede responder con
+> cualquiera de ellas, así que el propio cambio es visible y reproducible.
 
 ## 📊 De un vistazo
 
@@ -56,7 +100,7 @@ sin conexión.**
 
 | 🤖 LLMs en la decisión | 🌐 Llamadas de red al verificar | 📜 Escenarios regulatorios | 🔁 Misma entrada, misma salida |
 |:---:|:---:|:---:|:---:|
-| **0** · garantizado por un test automático | **0** · garantizado por un test automático | **3** bundles (2 congelados · 1 en vigor) | **1** checksum · idéntico byte a byte en cada ejecución |
+| **0** · garantizado por un test automático | **0** · garantizado por un test automático | **3** bundles (2 históricos · 1 en vigor), todos anclados por hash | Checksum **idéntico** en cada ejecución |
 
 </div>
 
@@ -99,7 +143,7 @@ flowchart LR
    C2PA se convierten en hojas de un árbol Merkle RFC 6962. La raíz se firma con Ed25519 y
    puede llevar un sello de tiempo RFC 3161.
 4. **Verificar.** Cualquiera con la carpeta del registro ejecuta `attestor ledger verify` sin
-   claves y sin red, y obtiene un código de salida: `0` íntegro, `1` manipulado.
+   clave privada y sin red, y obtiene un código de salida: `0` íntegro, `1` manipulado.
 
 <details>
 <summary><b>🏛️ Arquitectura completa por módulos</b></summary>
@@ -144,9 +188,25 @@ flowchart TD
 
 </details>
 
+## 🤔 Por qué está construido así
+
+Cuando un regulador o un auditor examina un sistema de IA, hace tres preguntas. Cada parte de
+Attestor existe para responder a una de ellas **con pruebas, no con promesas**:
+
+| La pregunta | La respuesta de Attestor | Cómo |
+|---|---|---|
+| ❓ *¿Qué decidieron y por qué?* | Una clase de riesgo y una lista de obligaciones, cada una con su artículo | Un motor de reglas sobre reglas YAML versionadas que un jurista puede revisar regla a regla |
+| ❓ *¿Con qué versión de la ley?* | Cada resultado indica su bundle regulatorio y el SHA-256 de ese bundle | Los bundles están congelados; un cambio en la ley es un fichero nuevo, nunca una edición |
+| ❓ *¿Pueden demostrar que no se cambió después?* | Un registro firmado que cualquiera verifica sin conexión con la clave pública que publica el operador | Ed25519 + árbol Merkle RFC 6962 + RFC 3161, con código de salida `0`/`1` |
+
+**¿Por qué no preguntarle a un LLM?** Porque una respuesta de cumplimiento es **evidencia**, y
+la evidencia tiene que salir idéntica cuando otra persona la recalcula meses después. Un modelo
+de lenguaje no puede garantizarlo; un motor de reglas con checksum sí. El motor no contiene
+ningún LLM, y un test hace fallar la CI si alguna vez se importa en él un SDK de LLM.
+
 ## 🚀 Pruébalo en 60 segundos
 
-Sin claves, sin configuración y sin red tras la instalación:
+Sin clave privada, sin configuración y sin red tras la instalación:
 
 ```bash
 git clone https://github.com/marcosmatalab/attestor.git && cd attestor
@@ -174,8 +234,8 @@ attestor demo
 
 > [!TIP]
 > En el paso 2, `integrity_ok` pasa a falso mientras `signature_ok` sigue en verdadero. El
-> registro distingue **«la evidencia se modificó después del sellado»** de **«la firma es
-> falsa»**: dos fallos distintos, que se señalan por separado.
+> registro distingue **«la evidencia se modificó después del sellado»** de **«la firma no
+> corresponde a la raíz»**: dos fallos distintos, que se señalan por separado.
 
 ```mermaid
 sequenceDiagram
@@ -232,7 +292,7 @@ timeline
 
 | Bundle | Qué es | Estado |
 |---|---|---|
-| `v2026-08` | Reglamento (UE) 2024/1689 en su texto original | 🧊 Congelado, histórico |
+| `v2026-08` | Reglamento (UE) 2024/1689 en su texto original (su nombre alude a la fecha de aplicación, 2 ago 2026) | 🧊 Congelado, histórico |
 | `omnibus-2026` | El Ómnibus Digital modelado el 23 de junio de 2026, cuando aún era propuesta | 🧊 Congelado, histórico |
 | `reg-2026-1744` | Reglamento 2024/1689 modificado por el Reglamento 2026/1744 | 🟢 **En vigor, y el bundle por defecto** |
 
@@ -244,16 +304,20 @@ No fue suerte, fue diseño. Las fechas de aplicación viven **en cada obligació
 única fecha global, así que una modificación que mueve unos plazos y otros no es aditiva por
 construcción. Historia completa en [`docs/regulatory-changelog.md`](docs/regulatory-changelog.md).
 
-## 🧠 Decisiones de diseño clave
+## ⚖️ Compromisos, elegidos a propósito
 
-| Decisión | Por qué importa |
-|---|---|
-| 📆 **Fechas de aplicación por obligación**, no una fecha global | Un reglamento nuevo se incorporó añadiendo un fichero, sin reescribir el motor |
-| ⚖️ **Motor de reglas, no un LLM**, para la decisión legal | Misma entrada, misma salida, mismo checksum: es lo que hace posible una pista de auditoría |
-| 🪪 **Integridad y confianza como dos ejes separados**, en C2PA y en RFC 3161 | Un firmante no reconocido nunca se confunde con un fichero manipulado |
-| 🧬 **Los campos con valor por defecto quedan fuera de la forma canónica** | Añadir preguntas al cuestionario no cambia el checksum de entradas anteriores |
-| 🧾 **Los códigos de salida son la interfaz** | Un pipeline de CI o el script de un auditor decide con `0`/`1`, sin analizar texto |
-| 🖨️ **Expediente y PDF deterministas** | Las mismas entradas producen siempre el mismo expediente, cuyo hash canónico se sella en el registro |
+Cada decisión de diseño renuncia a algo. Estos son los principales compromisos y por qué cada
+uno es el adecuado para un sistema de evidencias:
+
+| Decisión | Qué aporta | Qué cuesta | Por qué compensa |
+|---|---|---|---|
+| **Motor de reglas** en lugar de un LLM | Decisiones reproducibles y auditables | Las interpretaciones legales se escriben a mano en YAML; la entrada es un cuestionario estructurado | Una respuesta que no se puede recalcular de forma idéntica no es evidencia |
+| **Registro firmado *append-only*** en lugar de una blockchain | Sin infraestructura ni comisiones; verificación sin conexión con un comando | Firma un único operador, así que el auditor contrasta su clave con la publicada; la prueba de *cuándo* la aporta RFC 3161 | Un auditor necesita un fichero que comprobar, no una red a la que unirse |
+| **Bundles congelados** en lugar de editar reglas | Toda respuesta pasada sigue siendo reproducible con exactitud | Un cambio en la ley es un bundle nuevo, con algo de duplicación | Editar una regla haría imposible reproducir respuestas ya selladas |
+| **Plazos por obligación** en lugar de una fecha global | Las modificaciones que mueven solo algunas fechas son puramente aditivas | Bundles más extensos | Es lo que permitió incorporar el Ómnibus con un único fichero nuevo |
+| **Red solo al firmar o sellar**, nunca al verificar | Cualquiera verifica, en cualquier lugar, sin conexión | Un sello de tiempo RFC 3161 (raíz del registro o manifiesto C2PA) requiere llamar a una autoridad de sellado | La verificación la ejecutan terceros; la firma queda del lado del operador |
+| **Integridad y confianza en el firmante** por separado | Un firmante desconocido nunca se confunde con una manipulación | Dos veredictos que leer en lugar de un booleano | Fusionarlos produce falsas alarmas o falsa confianza |
+| **Campos con valor por defecto fuera** de la forma canónica | Los campos nuevos del cuestionario no cambian checksums anteriores | Un campo nuevo cuyo valor por defecto tenga significado requiere un bundle nuevo | Las evidencias antiguas siguen verificándose aunque el cuestionario crezca |
 
 <a id="calidad-de-ingenieria"></a>
 
@@ -270,7 +334,7 @@ construcción. Historia completa en [`docs/regulatory-changelog.md`](docs/regula
 
 La CI ejecuta `make check`, de modo que el workflow y el Makefile no pueden divergir, además de
 ESLint, build, `tsc` y Vitest del frontend, todos bloqueantes. Las herramientas de Python están
-fijadas a versiones exactas, el frontend queda bloqueado por `package-lock.json` y las GitHub
+fijadas a versiones exactas, las dependencias del frontend están fijadas por `package-lock.json` y las GitHub
 Actions están fijadas a SHAs de commit.
 
 ## 💻 Ejecútalo en local

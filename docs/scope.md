@@ -21,6 +21,10 @@ never hardcoded, so it can be reviewed and replaced.
   integrity and existence proofs, but it is not distributed and has no consensus: the
   operator holds the key and can still rewrite history that is not yet signed and
   timestamped. See [`ledger.md`](ledger.md).
+- **Verification trusts the key it is given.** `attestor ledger verify` checks the signature
+  with the public key recorded in `signed_root.json`. That proves the records match what that
+  key signed; proving *who* signed means comparing the key with the one the operator publishes
+  through an independent channel.
 - **Sealing a root may reach the network; verification never does.** An RFC 3161 timestamp
   has to be fetched from a timestamping authority. `tests/test_architecture.py` confines
   network imports to `ledger/timestamp.py` and asserts that no verifier imports a network
