@@ -22,6 +22,23 @@ live: classify → Annex IV → sign an AI output (C2PA) → verify → anchor i
 ledger offline. Signing and sealing use **ephemeral dev keys** generated per request (never
 committed), so the C2PA signer is honestly **untrusted** and the ledger still verifies offline.
 
+The pipeline itself is `attestor.demo.run_demo`, an engine-side function. The endpoint and
+`attestor demo` both call it; the CLI does **not** go through HTTP. It used to, via FastAPI's
+test client, which put a test-only dependency — and its deprecation warnings — on the first
+command a visitor runs. `tests/test_architecture.py` now forbids `fastapi` and `starlette` in
+engine modules, and `tests/test_demo_cli.py` runs the demo with `-W error::DeprecationWarning`.
+
+**Decision: FastAPI and Starlette keep lower bounds only** (`fastapi>=0.115`, Starlette via
+FastAPI).
+
+- *Why:* the warning was a symptom of the CLI depending on the web stack at all; that
+  dependency is gone, so a cap would pin around a problem that no longer exists. An upper
+  bound on a framework also blocks its security fixes until someone lifts it by hand.
+- *What it costs:* a breaking FastAPI or Starlette release can break `api/` without a
+  change here. CI resolves the latest compatible versions on every push and runs the API
+  tests against them, so the break shows up as a red build rather than in production; the
+  engine and the CLI demo cannot be affected, because they no longer import either.
+
 ### UI honesty (no overselling)
 
 - A persistent banner: a portfolio demonstration, not legal advice or a compliance product. The
