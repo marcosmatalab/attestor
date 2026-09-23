@@ -272,7 +272,7 @@ sequenceDiagram
 | 🔁 La decisión es determinista | `attestor classify --role provider --annex-iii-area employment --checksum-only`, dos veces | El mismo checksum `d821e3e0…ee48` las dos veces |
 | 🤖 No hay ningún LLM en la decisión | `pytest tests/test_architecture.py -k llm` | Recorre el AST de cada módulo del motor; importar un SDK de LLM hace fallar la CI |
 | 🧱 El motor nunca importa la capa API | `pytest tests/test_architecture.py -k api_layer` | Las dependencias van en un solo sentido, comprobado por un test |
-| 📜 Una ley nueva no cambió ningún caso de prueba de referencia | `pytest tests/test_regulatory_evolution.py` | Los dos bundles históricos conservan sus hashes de junio de 2026 |
+| 📜 La ley en vigor dejó intactos los bundles anteriores | `pytest tests/test_regulatory_evolution.py` | Los dos bundles históricos conservan sus hashes de junio de 2026 |
 | ⚓ Los checksums están anclados a digests literales | `pytest tests/test_checksum_anchors.py` | 27 valores SHA-256 versionados en el repo |
 | 🖼️ La captura coincide hoy con el motor | `pytest tests/test_dashboard_capture.py` | El checksum incrustado en el PNG es igual a un `classify()` en vivo |
 | 🧰 Toda herramienta que usan los controles está declarada | `pytest tests/test_tooling_declared.py` | Analiza el Makefile contra el extra `dev` |
@@ -287,14 +287,15 @@ clasificador hace fallar el test de arquitectura, una fecha editada hace fallar 
 checksum, quitar una línea del extra `dev` hace fallar el test de herramientas, y editar el
 fichero de metadatos de la captura hace fallar el test de captura.
 
-## 📅 La ley cambió. El motor no tuvo que hacerlo.
+## 📅 La ley cambió. Las versiones anteriores no tuvieron que hacerlo.
 
 ```mermaid
 timeline
     title Reglamento Europeo de IA: lo que modela Attestor
     2024-07-12 : Publicado el Reglamento (UE) 2024/1689 : bundle v2026-08 (texto original)
     2026-06-23 : Ómnibus Digital, aún propuesta : se modela el bundle omnibus-2026
-    2026-07-27 : Entra en vigor el Reglamento (UE) 2026/1744 : reg-2026-1744 pasa a ser el bundle por defecto
+    2026-07-27 : Entra en vigor el Reglamento (UE) 2026/1744
+    2026-09-22 : se añade el bundle reg-2026-1744 y pasa a ser el de por defecto (commit 66ec7c9)
     2027-12-02 : Se aplican las obligaciones de alto riesgo del Anexo III
     2028-08-02 : Se aplican las obligaciones de alto riesgo del Anexo I (sistemas integrados)
 ```
@@ -306,8 +307,12 @@ timeline
 | `reg-2026-1744` | Reglamento 2024/1689 modificado por el Reglamento 2026/1744 | 🟢 **En vigor, y el bundle por defecto** |
 
 La modificación se modeló cuando todavía era una propuesta. Al convertirse en ley el modelo
-coincidió, e incorporarla costó **un fichero de bundle nuevo y un valor por defecto cambiado**:
-ningún cambio en el motor, ninguna migración, ningún caso de prueba de referencia reescrito.
+coincidió. El repositorio la incorporó el **22 sep 2026** (commit `66ec7c9`): un bundle nuevo,
+el valor por defecto pasó de `v2026-08` a ese bundle en el motor y en la API, y tres cambios
+pequeños en el motor en el mismo commit: el calendario compara ahora con el bundle en vigor, y
+el campo `provisional_note` del Anexo IV pasó a llamarse `status_note` (su único fichero de
+referencia se actualizó). Ninguna regla se migró, y los dos bundles anteriores y sus vectores de
+referencia de clasificación no cambiaron ni un byte.
 
 No fue suerte, fue diseño. Las fechas de aplicación viven **en cada obligación**, nunca como una
 única fecha global, así que una modificación que mueve unos plazos y otros no es aditiva por
@@ -323,7 +328,7 @@ uno es el adecuado para un sistema de evidencias:
 | **Motor de reglas** en lugar de un LLM | Decisiones reproducibles y auditables | Las interpretaciones legales se escriben a mano en YAML; la entrada es un cuestionario estructurado | Una respuesta que no se puede recalcular de forma idéntica no es evidencia |
 | **Registro firmado *append-only*** en lugar de una blockchain | Sin infraestructura ni comisiones; verificación sin conexión con un comando | Firma un único operador, así que el auditor contrasta su clave con la publicada; la prueba de *cuándo* la aporta RFC 3161 | Un auditor necesita un fichero que comprobar, no una red a la que unirse |
 | **Bundles congelados** en lugar de editar reglas | Toda respuesta pasada sigue siendo reproducible con exactitud | Un cambio en la ley es un bundle nuevo, con algo de duplicación | Editar una regla haría imposible reproducir respuestas ya selladas |
-| **Plazos por obligación** en lugar de una fecha global | Las modificaciones que mueven solo algunas fechas son puramente aditivas | Bundles más extensos | Es lo que permitió incorporar el Ómnibus con un único fichero nuevo |
+| **Plazos por obligación** en lugar de una fecha global | Las modificaciones que mueven solo algunas fechas son puramente aditivas | Bundles más extensos | Es lo que permitió incorporar el Ómnibus sin migrar ninguna regla ni ningún bundle anterior |
 | **Red solo al firmar o sellar**, nunca al verificar | Cualquiera verifica, en cualquier lugar, sin conexión | Un sello de tiempo RFC 3161 (raíz del registro o manifiesto C2PA) requiere llamar a una autoridad de sellado | La verificación la ejecutan terceros; la firma queda del lado del operador |
 | **Integridad y confianza en el firmante** por separado | Un firmante desconocido nunca se confunde con una manipulación | Dos veredictos que leer en lugar de un booleano | Fusionarlos produce falsas alarmas o falsa confianza |
 | **Campos con valor por defecto fuera** de la forma canónica | Los campos nuevos del cuestionario no cambian checksums anteriores | Un campo nuevo cuyo valor por defecto tenga significado requiere un bundle nuevo | Las evidencias antiguas siguen verificándose aunque el cuestionario crezca |
