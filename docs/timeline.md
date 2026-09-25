@@ -24,7 +24,7 @@ safe harbour). The status caveat lives only in the bundle's `meta.status_note`
 
 **That design was tested by reality.** Those four deltas were modelled on 23 June
 2026, while the Omnibus was a proposal. It became law on 27 July 2026 and all four
-matched. The repository absorbed it on 22 September 2026 (commit `66ec7c9`) with a new
+matched. The repository absorbed it on 22 September 2026 (commit `00a566d`) with a new
 bundle, a changed default, and a small change here: the comparison now runs against the
 bundle in force. No rule was migrated and no earlier bundle changed. Because effective dates
 live **on each obligation** rather than as one global date on the bundle, an

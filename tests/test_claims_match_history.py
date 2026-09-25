@@ -22,7 +22,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 
 # --- the facts, as git records them ---------------------------------------------------
-BUNDLE_COMMIT = "66ec7c9"
+BUNDLE_COMMIT = "00a566d"
 BUNDLE_ADDED = "2026-09-22"  # the day reg-2026-1744 was added and made the default
 LAW_IN_FORCE = "2026-07-27"  # the day the Regulation itself became binding
 BUNDLE_FILE = "src/attestor/classifier/rules/reg-2026-1744.yaml"

@@ -282,7 +282,7 @@ timeline
     2024-07-12 : Reg. (EU) 2024/1689 published : bundle v2026-08 (as enacted)
     2026-06-23 : Digital Omnibus still a proposal : bundle omnibus-2026 modelled
     2026-07-27 : Reg. (EU) 2026/1744 enters into force
-    2026-09-22 : bundle reg-2026-1744 added and made the default (commit 66ec7c9)
+    2026-09-22 : bundle reg-2026-1744 added and made the default (commit 00a566d)
     2027-12-02 : Annex III high-risk obligations apply
     2028-08-02 : Annex I embedded high-risk obligations apply
 ```
@@ -294,7 +294,7 @@ timeline
 | `reg-2026-1744` | Reg. 2024/1689 as amended by Reg. 2026/1744 | 🟢 **In force, and the default** |
 
 The amendment was modelled while it was still a proposal. When it became law the model
-matched. The repository absorbed it on **22 Sep 2026** (commit `66ec7c9`): a new bundle file,
+matched. The repository absorbed it on **22 Sep 2026** (commit `00a566d`): a new bundle file,
 the default moved from `v2026-08` to it in the engine and the API, and three small engine
 edits in the same commit: the timeline now compares against the bundle in force, and the
 Annex IV field `provisional_note` became `status_note` (its one golden file followed).

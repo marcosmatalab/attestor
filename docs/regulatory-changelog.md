@@ -34,7 +34,7 @@ python -c "from attestor.classifier import load_bundle as L;   print(*[(v, L(v).
 | 2026-07-08 | Final act signed |
 | 2026-07-24 | Published in the OJEU as **Regulation (EU) 2026/1744** |
 | **2026-07-27** | **Enters into force.** |
-| **2026-09-22** | **Bundle `reg-2026-1744` added** (commit `66ec7c9`); it becomes the default in the engine and the API |
+| **2026-09-22** | **Bundle `reg-2026-1744` added** (commit `00a566d`); it becomes the default in the engine and the API |
 
 ## What the amendment changed
 
@@ -53,7 +53,7 @@ Four deltas against the Regulation as originally enacted:
 
 The four deltas above were modelled on **23 June 2026, before the text was adopted**.
 When it became law on 27 July 2026, all four turned out to match the adopted text.
-The repository absorbed it on **22 September 2026**, in commit `66ec7c9`:
+The repository absorbed it on **22 September 2026**, in commit `00a566d`:
 
 - **added** the `reg-2026-1744` bundle, and made it the default in `classifier/bundle.py`
   and in the API (both previously `v2026-08`);
@@ -66,7 +66,7 @@ The repository absorbed it on **22 September 2026**, in commit `66ec7c9`:
 
 No rule was migrated. No earlier bundle moved by a byte, and neither did the
 classification golden vectors of `v2026-08` and `omnibus-2026`
-(`git show --stat 66ec7c9` lists neither).
+(`git show --stat 00a566d` lists neither).
 
 That is not luck, it is a schema decision: effective dates are stored **on each
 obligation**, never as a single global date on the bundle. A global date would have

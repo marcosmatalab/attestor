@@ -84,7 +84,7 @@ MAJOR change: exit codes `0`, `1` and `2` keep their meaning, and nothing was re
 - The demo's C2PA AI-disclosure label names `example-model` instead of a commercial model
   the project does not use. (#28)
 - The docs dated the in-force bundle to 2026-07-27 and said absorbing it changed no engine
-  code. `git log` adds it on 2026-09-22 in `66ec7c9`, a commit that also edited
+  code. `git log` adds it on 2026-09-22 in `00a566d`, a commit that also edited
   `classifier/timeline.py`, `classifier/bundle.py` and `annexiv/*`; the docs now say so,
   and a test checks them against the history. (#29)
 - `docs/dashboard.png` re-captured: it showed the ledger headline from before the pin. (#30)
@@ -113,7 +113,7 @@ which every claim made about it is checkable by a command.
 ### Changed
 
 - The default bundle moved from `v2026-08` to `reg-2026-1744`, in the engine and the API
-  (commit `66ec7c9`, 2026-09-22).
+  (commit `00a566d`, 2026-09-22).
 - The README dropped from 574 lines to 249, and its depth moved into `docs/`.
 - CI runs `make check`, so the workflow and the Makefile cannot drift apart.
 
@@ -137,7 +137,7 @@ Adopted by the Council on 29 June 2026, published in the Official Journal on 24 
 2026, binding since 27 July 2026. It amends Reg. (EU) 2024/1689, moving Annex III
 high-risk obligations to 2 December 2027 and Annex I embedded systems to 2 August 2028.
 
-The repository absorbed it on 2026-09-22 (commit `66ec7c9`): the `reg-2026-1744` bundle,
+The repository absorbed it on 2026-09-22 (commit `00a566d`): the `reg-2026-1744` bundle,
 the default moved to it, and three small engine edits in the same commit (the timeline
 compares against the bundle in force; the Annex IV field `provisional_note` became
 `status_note`, and its golden followed). No rule was migrated, and the two earlier bundles

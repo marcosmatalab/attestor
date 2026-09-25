@@ -285,7 +285,7 @@ timeline
     2024-07-12 : Publicado el Reglamento (UE) 2024/1689 : bundle v2026-08 (texto original)
     2026-06-23 : Ómnibus Digital, aún propuesta : se modela el bundle omnibus-2026
     2026-07-27 : Entra en vigor el Reglamento (UE) 2026/1744
-    2026-09-22 : se añade el bundle reg-2026-1744 y pasa a ser el de por defecto (commit 66ec7c9)
+    2026-09-22 : se añade el bundle reg-2026-1744 y pasa a ser el de por defecto (commit 00a566d)
     2027-12-02 : Se aplican las obligaciones de alto riesgo del Anexo III
     2028-08-02 : Se aplican las obligaciones de alto riesgo del Anexo I (sistemas integrados)
 ```
@@ -297,7 +297,7 @@ timeline
 | `reg-2026-1744` | Reglamento 2024/1689 modificado por el Reglamento 2026/1744 | 🟢 **En vigor, y el bundle por defecto** |
 
 La modificación se modeló cuando todavía era una propuesta. Al convertirse en ley el modelo
-coincidió. El repositorio la incorporó el **22 sep 2026** (commit `66ec7c9`): un bundle nuevo,
+coincidió. El repositorio la incorporó el **22 sep 2026** (commit `00a566d`): un bundle nuevo,
 el valor por defecto pasó de `v2026-08` a ese bundle en el motor y en la API, y tres cambios
 pequeños en el motor en el mismo commit: el calendario compara ahora con el bundle en vigor, y
 el campo `provisional_note` del Anexo IV pasó a llamarse `status_note` (su único fichero de
